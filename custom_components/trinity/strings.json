@@ -1,0 +1,15 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Trinity display",
+        "data": {
+          "topic": "MQTT topic"
+        },
+        "data_description": {
+          "topic": "The MQTT topic the Trinity display subscribes to for RGB565 pixel data."
+        }
+      }
+    }
+  }
+}

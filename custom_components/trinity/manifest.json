@@ -1,0 +1,18 @@
+{
+    "domain": "trinity",
+    "name": "Trinity",
+    "codeowners": [
+        "@d0ugal"
+    ],
+    "config_flow": true,
+    "dependencies": [
+        "mqtt"
+    ],
+    "documentation": "https://github.com/d0ugal/homeassistant-trinity",
+    "iot_class": "local_push",
+    "issue_tracker": "https://github.com/d0ugal/homeassistant-trinity/issues",
+    "requirements": [
+        "tottie==0.1.1"
+    ],
+    "version": "1.0.0"
+}

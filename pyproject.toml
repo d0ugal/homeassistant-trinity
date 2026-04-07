@@ -1,0 +1,32 @@
+[project]
+name = "homeassistant-trinity"
+version = "1.0.0"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "RUF",
+]
+ignore = [
+    "E501",
+    "RUF012",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components.trinity"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["custom_components/trinity"]
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportMissingModuleSource = "none"
+reportGeneralTypeIssues = "warning"
+reportCallIssue = "warning"

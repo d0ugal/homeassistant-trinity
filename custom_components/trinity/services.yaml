@@ -1,0 +1,63 @@
+display_moon:
+  name: Display moon
+  description: Render the current moon phase and push it to the Trinity display.
+  fields: {}
+
+display_now_playing:
+  name: Display now playing
+  description: Fetch album art and overlay track/artist text from a media player entity.
+  fields:
+    entity_id:
+      name: Media player
+      description: The media player entity to read art and metadata from.
+      required: true
+      selector:
+        entity:
+          domain: media_player
+
+display_image:
+  name: Display image
+  description: Push any image to the display. Centre-cropped and resized to 64×64.
+  fields:
+    path:
+      name: Path
+      description: Absolute path to a PNG or JPG file. Mutually exclusive with entity_id.
+      required: false
+      example: /config/www/image.jpg
+      selector:
+        text:
+    entity_id:
+      name: Camera entity
+      description: A camera entity to snapshot and display. Mutually exclusive with path.
+      required: false
+      selector:
+        entity:
+          domain: camera
+
+display_stream:
+  name: Display stream
+  description: >
+    Repeatedly snapshot a camera entity and push frames to the display for the
+    given duration (~6 FPS). Stops when the duration elapses or cancel_stream is called.
+  fields:
+    entity_id:
+      name: Camera entity
+      description: The camera entity to stream from.
+      required: true
+      selector:
+        entity:
+          domain: camera
+    stream_for:
+      name: Stream for
+      description: How many seconds to stream before stopping.
+      required: true
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: seconds
+
+clear:
+  name: Clear
+  description: Publish an empty payload, causing the display to fall back to its built-in clock.
+  fields: {}
