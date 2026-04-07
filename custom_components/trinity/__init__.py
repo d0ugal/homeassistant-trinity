@@ -8,6 +8,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from tottie.overlay import MAX_CHARS
 
 from .const import DOMAIN
 
@@ -40,6 +41,15 @@ _SCHEMA_DISPLAY_STREAM = vol.Schema(
     {
         vol.Required("entity_id"): cv.entity_id,
         vol.Required("stream_for"): vol.All(vol.Coerce(float), vol.Range(min=1)),
+    }
+)
+
+_SCHEMA_DISPLAY_EMOJI = vol.Schema(
+    {
+        vol.Required("emoji"): cv.string,
+        vol.Optional("display_for"): vol.Coerce(float),
+        vol.Optional("line1"): vol.All(cv.string, vol.Length(max=MAX_CHARS)),
+        vol.Optional("line2"): vol.All(cv.string, vol.Length(max=MAX_CHARS)),
     }
 )
 
@@ -88,6 +98,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 stream_for=call.data["stream_for"],
             )
 
+    async def _display_emoji(call) -> None:
+        display_for = call.data.get("display_for")
+        for coord in _coordinators():
+            await coord.do_display_emoji(
+                call.data["emoji"],
+                display_for=display_for,
+                line1=call.data.get("line1"),
+                line2=call.data.get("line2"),
+            )
+
     async def _clear(call) -> None:
         for coord in _coordinators():
             await coord.do_clear()
@@ -101,6 +121,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_register(
             DOMAIN, "display_stream", _display_stream, _SCHEMA_DISPLAY_STREAM
         )
+        hass.services.async_register(DOMAIN, "display_emoji", _display_emoji, _SCHEMA_DISPLAY_EMOJI)
         hass.services.async_register(DOMAIN, "clear", _clear, _SCHEMA_CLEAR)
 
     return True
@@ -122,6 +143,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "display_now_playing",
             "display_image",
             "display_stream",
+            "display_emoji",
             "clear",
         ):
             hass.services.async_remove(DOMAIN, svc)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
+import os
 from typing import TYPE_CHECKING
 
 from homeassistant.components import mqtt
@@ -16,6 +17,7 @@ from homeassistant.helpers.storage import Store
 
 from .const import (
     CONF_TOPIC,
+    DISPLAY_MODE_EMOJI,
     DISPLAY_MODE_IMAGE,
     DISPLAY_MODE_MOON,
     DISPLAY_MODE_NOW_PLAYING,
@@ -97,6 +99,10 @@ class TrinityCoordinator:
             entity_id = attrs.get("entity_id")
             if entity_id:
                 await self.do_display_now_playing(entity_id, set_default=False)
+        elif mode == DISPLAY_MODE_EMOJI:
+            char = attrs.get("char")
+            if char:
+                await self.do_display_emoji(char, set_default=False)
         elif mode == DISPLAY_MODE_IMAGE:
             path = attrs.get("path")
             entity_id = attrs.get("entity_id")
@@ -239,6 +245,98 @@ class TrinityCoordinator:
         self.cancel_stream()
         self.cancel_revert()
         self._stream_task = self.hass.async_create_task(self._stream_loop(entity_id, stream_for))
+
+    async def do_display_emoji(
+        self,
+        emoji_input: str,
+        display_for: float | None = None,
+        set_default: bool = True,
+        line1: str | None = None,
+        line2: str | None = None,
+    ) -> None:
+        """Fetch a Twemoji PNG, resize to 64×64, and publish."""
+        self.cancel_stream()
+        import aiohttp
+        import emoji as emoji_lib
+        from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+        raw = emoji_input.strip()
+        if emoji_lib.is_emoji(raw):
+            char = raw
+        else:
+            name = raw.strip(":")
+            char = emoji_lib.emojize(f":{name}:", language="alias")
+            if not emoji_lib.is_emoji(char):
+                _LOGGER.error("display_emoji: unknown emoji %r", emoji_input)
+                return
+
+        # Build Twemoji filename: codepoints joined by "-", skipping U+FE0F
+        codepoints = "-".join(f"{ord(c):x}" for c in char if c != "\ufe0f")
+        cache_dir = self.hass.config.path(".storage", "trinity_emoji_cache")
+        png_path = os.path.join(cache_dir, f"emoji_{codepoints}.png")
+
+        if not os.path.exists(png_path):
+            base_url = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72"
+            session = async_get_clientsession(self.hass)
+
+            png_data: bytes | None = None
+            for candidate in [codepoints, codepoints.replace("-fe0f", "")]:
+                try:
+                    async with session.get(
+                        f"{base_url}/{candidate}.png",
+                        timeout=aiohttp.ClientTimeout(total=10),
+                    ) as resp:
+                        if resp.status == 200:
+                            png_data = await resp.read()
+                            break
+                except Exception as exc:
+                    _LOGGER.debug("display_emoji: fetch attempt failed: %s", exc)
+
+            if not png_data:
+                _LOGGER.error(
+                    "display_emoji: could not fetch Twemoji for %r (%s)", char, codepoints
+                )
+                return
+
+            def _render_png() -> None:
+                from PIL import Image as PilImage
+
+                img = PilImage.open(io.BytesIO(png_data)).convert("RGBA")
+                bg = PilImage.new("RGB", img.size, (0, 0, 0))
+                bg.paste(img, mask=img.split()[3])
+                resized = bg.resize((_SIZE, _SIZE), PilImage.LANCZOS)
+                os.makedirs(cache_dir, exist_ok=True)
+                resized.save(png_path, format="PNG")
+
+            await self.hass.async_add_executor_job(_render_png)
+            _LOGGER.info("display_emoji: rendered and cached %r (%s)", char, codepoints)
+        else:
+            _LOGGER.info("display_emoji: cache hit %r (%s)", char, codepoints)
+
+        def _to_payload() -> bytes:
+            from PIL import Image as PilImage
+            from tottie.image import to_rgb565
+            from tottie.overlay import apply_now_playing_overlay
+
+            img = PilImage.open(png_path).convert("RGB")
+            if line1 or line2:
+                apply_now_playing_overlay(img, line1 or "", line2 or "")
+            return to_rgb565(img)
+
+        payload = await self.hass.async_add_executor_job(_to_payload)
+        await self._publish(payload)
+
+        if set_default and not display_for:
+            self._default_mode = DISPLAY_MODE_EMOJI
+            self._default_attrs = {"char": char}
+            await self._save()
+
+        if display_for:
+            self.schedule_revert(display_for)
+        else:
+            self.cancel_revert()
+
+        _LOGGER.info("display_emoji: published %r", char)
 
     async def do_clear(self) -> None:
         """Publish an empty payload, causing the display to fall back to clock."""

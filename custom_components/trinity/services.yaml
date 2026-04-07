@@ -87,6 +87,42 @@ display_stream:
           mode: box
           unit_of_measurement: seconds
 
+display_emoji:
+  name: Display emoji
+  description: >
+    Fetch a Twemoji image and display it at 64×64. Accepts the emoji character
+    directly (🔔) or its name with or without colons (bell or :bell:).
+    Result is cached on disk.
+  fields:
+    emoji:
+      name: Emoji
+      description: The emoji to display — character (🔔), name (bell), or colon-wrapped name (:bell:).
+      required: true
+      example: "bell"
+      selector:
+        text:
+    display_for:
+      name: Display for
+      description: Revert to the previous default after this many seconds.
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: seconds
+    line1:
+      name: Line 1
+      description: Optional text overlay — first line.
+      required: false
+      selector:
+        text:
+    line2:
+      name: Line 2
+      description: Optional text overlay — second line.
+      required: false
+      selector:
+        text:
+
 clear:
   name: Clear
   description: Publish an empty payload, causing the display to fall back to its built-in clock.
