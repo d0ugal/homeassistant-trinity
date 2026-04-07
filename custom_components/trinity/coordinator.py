@@ -254,7 +254,7 @@ class TrinityCoordinator:
         line1: str | None = None,
         line2: str | None = None,
     ) -> None:
-        """Fetch a Twemoji PNG, resize to 64×64, and publish."""
+        """Fetch a Twemoji PNG, resize to 64x64, and publish."""
         self.cancel_stream()
         import aiohttp
         import emoji as emoji_lib
