@@ -1,0 +1,75 @@
+substitutions:
+  name: trinity-matrix
+
+esphome:
+  name: ${name}
+  friendly_name: Trinity Matrix Display
+  platformio_options:
+    build_flags:
+      - "-Wno-error"
+
+wifi:
+  power_save_mode: none
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    version: recommended
+
+api:
+  encryption:
+    key: !secret trinity_matrix_api_key
+
+mqtt:
+  broker: !secret mqtt_broker
+  discovery: false
+  on_message:
+    - topic: trinity-matrix/image
+      then:
+        - lambda: |-
+            id(pixel_valid) = false;
+            id(pixel_buf) = x;
+            id(pixel_valid) = true;
+            id(matrix_display).update();
+
+button:
+  - platform: restart
+    id: restart_button
+    name: "${name} restart"
+
+globals:
+  - id: pixel_buf
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: pixel_valid
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+display:
+  - platform: hub75
+    id: matrix_display
+    board: esp32-trinity
+    panel_width: 64
+    panel_height: 64
+    update_interval: never
+    min_refresh_rate: 200
+    lambda: |-
+      if (id(pixel_valid) && id(pixel_buf).size() >= 8192) {
+        for (int py = 0; py < 64; py++) {
+          for (int px = 0; px < 64; px++) {
+            int idx = (py * 64 + px) * 2;
+            uint8_t hi = (uint8_t)id(pixel_buf)[idx];
+            uint8_t lo = (uint8_t)id(pixel_buf)[idx + 1];
+            uint16_t rgb565 = ((uint16_t)hi << 8) | lo;
+            uint8_t r = ((rgb565 >> 11) & 0x1F) << 3;
+            uint8_t g = ((rgb565 >> 5) & 0x3F) << 2;
+            uint8_t b = (rgb565 & 0x1F) << 3;
+            it.draw_pixel_at(px, py, Color(r, g, b));
+          }
+        }
+      } else {
+        it.fill(Color::BLACK);
+      }
