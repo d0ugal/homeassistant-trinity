@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.1.0...v1.2.0) (2026-04-07)
+
+
+### Features
+
+* add display_emoji service ([21d7818](https://github.com/d0ugal/homeassistant-trinity/commit/21d78182984c49c3c1b6ca356592789a87955faf))
+
+
+### Bug Fixes
+
+* replace multiplication sign in docstring to pass RUF002 ([011df3a](https://github.com/d0ugal/homeassistant-trinity/commit/011df3a1d344a0900cbd297ca48aa0c1dc77c418))
+
+
+### Documentation
+
+* add display_emoji service to README ([0bb83c9](https://github.com/d0ugal/homeassistant-trinity/commit/0bb83c9787c8eed3af8e1fca5d92142e87238f0a))
+
 ## [1.1.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.0.0...v1.1.0) (2026-04-07)
 
 
