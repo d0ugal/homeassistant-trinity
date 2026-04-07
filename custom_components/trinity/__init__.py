@@ -15,11 +15,16 @@ _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-_SCHEMA_DISPLAY_MOON = vol.Schema({})
+_SCHEMA_DISPLAY_MOON = vol.Schema(
+    {
+        vol.Optional("display_for"): vol.Coerce(float),
+    }
+)
 
 _SCHEMA_DISPLAY_NOW_PLAYING = vol.Schema(
     {
         vol.Required("entity_id"): cv.entity_id,
+        vol.Optional("display_for"): vol.Coerce(float),
     }
 )
 
@@ -27,6 +32,7 @@ _SCHEMA_DISPLAY_IMAGE = vol.Schema(
     {
         vol.Exclusive("path", "source"): cv.string,
         vol.Exclusive("entity_id", "source"): cv.entity_id,
+        vol.Optional("display_for"): vol.Coerce(float),
     }
 )
 
@@ -50,24 +56,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
 
     coordinator = TrinityCoordinator(hass, entry)
+    await coordinator.async_load_and_replay()
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     def _coordinators() -> list[TrinityCoordinator]:
         return [c for c in hass.data.get(DOMAIN, {}).values() if isinstance(c, TrinityCoordinator)]
 
     async def _display_moon(call) -> None:
+        display_for = call.data.get("display_for")
         for coord in _coordinators():
-            await coord.do_display_moon()
+            await coord.do_display_moon(display_for=display_for)
 
     async def _display_now_playing(call) -> None:
+        display_for = call.data.get("display_for")
         for coord in _coordinators():
-            await coord.do_display_now_playing(call.data["entity_id"])
+            await coord.do_display_now_playing(call.data["entity_id"], display_for=display_for)
 
     async def _display_image(call) -> None:
+        display_for = call.data.get("display_for")
         for coord in _coordinators():
             await coord.do_display_image(
                 path=call.data.get("path"),
                 entity_id=call.data.get("entity_id"),
+                display_for=display_for,
             )
 
     async def _display_stream(call) -> None:
@@ -101,6 +112,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = hass.data.get(DOMAIN, {}).get(entry.entry_id)
     if coordinator:
         coordinator.cancel_stream()
+        coordinator.cancel_revert()
 
     hass.data[DOMAIN].pop(entry.entry_id, None)
 

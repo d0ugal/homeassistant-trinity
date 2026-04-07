@@ -1,11 +1,20 @@
 display_moon:
   name: Display moon
-  description: Render the current moon phase and push it to the Trinity display.
-  fields: {}
+  description: Render the current moon phase and push it to the Trinity display. Becomes the new default.
+  fields:
+    display_for:
+      name: Display for
+      description: Revert to the previous default after this many seconds.
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: seconds
 
 display_now_playing:
   name: Display now playing
-  description: Fetch album art and overlay track/artist text from a media player entity.
+  description: Fetch album art and overlay track/artist text from a media player entity. Becomes the new default.
   fields:
     entity_id:
       name: Media player
@@ -14,10 +23,19 @@ display_now_playing:
       selector:
         entity:
           domain: media_player
+    display_for:
+      name: Display for
+      description: Revert to the previous default after this many seconds.
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: seconds
 
 display_image:
   name: Display image
-  description: Push any image to the display. Centre-cropped and resized to 64×64.
+  description: Push any image to the display. Centre-cropped and resized to 64×64. Becomes the new default unless display_for is set.
   fields:
     path:
       name: Path
@@ -33,12 +51,22 @@ display_image:
       selector:
         entity:
           domain: camera
+    display_for:
+      name: Display for
+      description: Revert to the previous default after this many seconds.
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: seconds
 
 display_stream:
   name: Display stream
   description: >
     Repeatedly snapshot a camera entity and push frames to the display for the
-    given duration (~6 FPS). Stops when the duration elapses or cancel_stream is called.
+    given duration (~6 FPS). Reverts to the default display when the duration elapses
+    or another display action is triggered.
   fields:
     entity_id:
       name: Camera entity
@@ -49,7 +77,7 @@ display_stream:
           domain: camera
     stream_for:
       name: Stream for
-      description: How many seconds to stream before stopping.
+      description: How many seconds to stream before reverting to the default display.
       required: true
       selector:
         number:
