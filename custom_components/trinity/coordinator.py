@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
+from typing import TYPE_CHECKING
 
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
@@ -12,6 +13,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_TOPIC
+
+if TYPE_CHECKING:
+    from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,7 +49,6 @@ class TrinityCoordinator:
     async def do_display_now_playing(self, entity_id: str) -> None:
         """Fetch album art from a media player and publish with overlay."""
         from PIL import Image
-
         from tottie.image import crop_and_resize, to_rgb565
         from tottie.overlay import apply_now_playing_overlay
 
@@ -76,7 +79,6 @@ class TrinityCoordinator:
     ) -> None:
         """Push an image from a file path or camera entity."""
         from PIL import Image
-
         from tottie.image import crop_and_resize, to_rgb565
 
         img: Image.Image | None = None
@@ -119,7 +121,7 @@ class TrinityCoordinator:
     async def _publish(self, payload: bytes) -> None:
         await mqtt.async_publish(self.hass, self._topic, payload, retain=True)
 
-    async def _fetch_image_url(self, url: str) -> "Image.Image | None":  # type: ignore[name-defined]
+    async def _fetch_image_url(self, url: str) -> Image.Image | None:
         from PIL import Image
 
         if url.startswith("/"):
@@ -137,9 +139,8 @@ class TrinityCoordinator:
             _LOGGER.warning("Failed to fetch image from %s: %s", url, exc)
             return None
 
-    async def _snapshot_camera(self, entity_id: str) -> "Image.Image | None":  # type: ignore[name-defined]
+    async def _snapshot_camera(self, entity_id: str) -> Image.Image | None:
         from PIL import Image
-
         from homeassistant.components.camera import async_get_image as camera_get_image
 
         try:
