@@ -199,7 +199,7 @@ class TrinityCoordinator:
         display_for: float | None = None,
         set_default: bool = True,
     ) -> None:
-        """Push an image from a file path or camera entity."""
+        """Push an image from a file path, camera entity, or image entity."""
         self.cancel_stream()
         from PIL import Image
         from tottie.image import crop_and_resize, to_rgb565
@@ -209,7 +209,11 @@ class TrinityCoordinator:
         if path:
             img = await self.hass.async_add_executor_job(lambda: Image.open(path).convert("RGB"))
         elif entity_id:
-            img = await self._snapshot_camera(entity_id)
+            domain = entity_id.split(".")[0]
+            if domain == "image":
+                img = await self._snapshot_image_entity(entity_id)
+            else:
+                img = await self._snapshot_camera(entity_id)
 
         if img is None:
             _LOGGER.warning("display_image: no image source provided or fetch failed")
@@ -265,6 +269,18 @@ class TrinityCoordinator:
         except Exception as exc:
             _LOGGER.warning("Failed to fetch image from %s: %s", url, exc)
             return None
+
+    async def _snapshot_image_entity(self, entity_id: str) -> Image.Image | None:
+        """Fetch the latest image from an image.* entity via its entity_picture URL."""
+        state = self.hass.states.get(entity_id)
+        if not state:
+            _LOGGER.warning("Image entity %s not found", entity_id)
+            return None
+        picture = str(state.attributes.get("entity_picture") or "")
+        if not picture:
+            _LOGGER.warning("Image entity %s has no entity_picture", entity_id)
+            return None
+        return await self._fetch_image_url(picture)
 
     async def _snapshot_camera(self, entity_id: str) -> Image.Image | None:
         from homeassistant.components.camera import async_get_image as camera_get_image
