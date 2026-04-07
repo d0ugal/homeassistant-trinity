@@ -140,8 +140,8 @@ class TrinityCoordinator:
             return None
 
     async def _snapshot_camera(self, entity_id: str) -> Image.Image | None:
-        from PIL import Image
         from homeassistant.components.camera import async_get_image as camera_get_image
+        from PIL import Image
 
         try:
             camera_image = await camera_get_image(self.hass, entity_id, timeout=5)
