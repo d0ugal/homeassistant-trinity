@@ -11,6 +11,7 @@ pixel data with no cloud dependencies.
 - **Moon phase display** — renders a real-time moon phase image using your HA home location
 - **Now playing** — shows album art with track/artist overlay from any HA media player
 - **Display any image** — send a PNG, JPG, or camera snapshot; automatically centre-cropped and resized to 64×64
+- **Emoji display** — fetch any [Twemoji](https://twemoji.twitter.com/) and show it at 64×64, with optional text overlay; cached on disk
 - **Camera streaming** — stream live camera snapshots at ~6 FPS
 - **Automation-friendly** — all display modes are triggered by service calls; schedule and combine them however you like
 - **Temporary displays** — `display_for` reverts back to the previous default after a set number of seconds
@@ -92,6 +93,22 @@ action: trinity.display_image
 data:
   path: /config/www/doorbell.jpg
   display_for: 30
+```
+
+### `trinity.display_emoji`
+
+Fetches a [Twemoji](https://twemoji.twitter.com/) image and displays it at 64×64. Accepts the
+emoji character directly, or its name with or without colons. The rendered image is cached on
+disk. Optionally overlays two lines of text (e.g. for weather condition + temperature).
+Becomes the new default unless `display_for` is set.
+
+```yaml
+action: trinity.display_emoji
+data:
+  emoji: "bell"        # or 🔔 or :bell:
+  display_for: 30
+  line1: "19C"
+  line2: "SW 12kmh"
 ```
 
 ### `trinity.display_stream`
