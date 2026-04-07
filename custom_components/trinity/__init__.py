@@ -53,11 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     def _coordinators() -> list[TrinityCoordinator]:
-        return [
-            c
-            for c in hass.data.get(DOMAIN, {}).values()
-            if isinstance(c, TrinityCoordinator)
-        ]
+        return [c for c in hass.data.get(DOMAIN, {}).values() if isinstance(c, TrinityCoordinator)]
 
     async def _display_moon(call) -> None:
         for coord in _coordinators():
@@ -90,9 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_register(
             DOMAIN, "display_now_playing", _display_now_playing, _SCHEMA_DISPLAY_NOW_PLAYING
         )
-        hass.services.async_register(
-            DOMAIN, "display_image", _display_image, _SCHEMA_DISPLAY_IMAGE
-        )
+        hass.services.async_register(DOMAIN, "display_image", _display_image, _SCHEMA_DISPLAY_IMAGE)
         hass.services.async_register(
             DOMAIN, "display_stream", _display_stream, _SCHEMA_DISPLAY_STREAM
         )
@@ -110,10 +104,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN].pop(entry.entry_id, None)
 
-    if not any(
-        isinstance(c, TrinityCoordinator) for c in hass.data.get(DOMAIN, {}).values()
-    ):
-        for svc in ("display_moon", "display_now_playing", "display_image", "display_stream", "clear"):
+    if not any(isinstance(c, TrinityCoordinator) for c in hass.data.get(DOMAIN, {}).values()):
+        for svc in (
+            "display_moon",
+            "display_now_playing",
+            "display_image",
+            "display_stream",
+            "clear",
+        ):
             hass.services.async_remove(DOMAIN, svc)
 
     return True

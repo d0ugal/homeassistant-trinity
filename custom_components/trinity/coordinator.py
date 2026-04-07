@@ -84,9 +84,7 @@ class TrinityCoordinator:
         img: Image.Image | None = None
 
         if path:
-            img = await self.hass.async_add_executor_job(
-                lambda: Image.open(path).convert("RGB")
-            )
+            img = await self.hass.async_add_executor_job(lambda: Image.open(path).convert("RGB"))
         elif entity_id:
             img = await self._snapshot_camera(entity_id)
 
@@ -100,9 +98,7 @@ class TrinityCoordinator:
     async def do_display_stream(self, entity_id: str, stream_for: float) -> None:
         """Stream camera snapshots to the display for the given duration."""
         self.cancel_stream()
-        self._stream_task = self.hass.async_create_task(
-            self._stream_loop(entity_id, stream_for)
-        )
+        self._stream_task = self.hass.async_create_task(self._stream_loop(entity_id, stream_for))
 
     async def do_clear(self) -> None:
         """Publish an empty payload, causing the display to fall back to clock."""
