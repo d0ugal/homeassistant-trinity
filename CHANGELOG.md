@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.2.0...v1.3.0) (2026-04-08)
+
+
+### Features
+
+* render moon image in greyscale ([af1eec1](https://github.com/d0ugal/homeassistant-trinity/commit/af1eec18c0907701ffda3fbf840306657f1cad2e))
+
 ## [1.2.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.1.0...v1.2.0) (2026-04-07)
 
 
