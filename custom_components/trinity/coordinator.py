@@ -136,6 +136,7 @@ class TrinityCoordinator:
         elev = int(self.hass.config.elevation or 0)
 
         img = await self.hass.async_add_executor_job(render_image, lat, lon, elev)
+        img = img.convert("L").convert("RGB")
         await self._publish(to_rgb565(img))
 
         if set_default and not display_for:
