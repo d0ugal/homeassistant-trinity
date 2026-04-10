@@ -241,11 +241,15 @@ class TrinityCoordinator:
 
         _LOGGER.info("display_image: published %s", entity_id or path)
 
-    async def do_display_stream(self, entity_id: str, stream_for: float) -> None:
+    async def do_display_stream(
+        self, entity_id: str, stream_for: float, crop: str = "center"
+    ) -> None:
         """Stream camera snapshots to the display for the given duration."""
         self.cancel_stream()
         self.cancel_revert()
-        self._stream_task = self.hass.async_create_task(self._stream_loop(entity_id, stream_for))
+        self._stream_task = self.hass.async_create_task(
+            self._stream_loop(entity_id, stream_for, crop)
+        )
 
     async def do_display_emoji(
         self,
@@ -394,7 +398,7 @@ class TrinityCoordinator:
             _LOGGER.warning("Failed to snapshot camera %s: %s", entity_id, exc)
             return None
 
-    async def _stream_loop(self, entity_id: str, stream_for: float) -> None:
+    async def _stream_loop(self, entity_id: str, stream_for: float, crop: str = "center") -> None:
         from tottie.image import crop_and_resize, to_rgb565
 
         deadline = asyncio.get_event_loop().time() + stream_for
@@ -406,7 +410,7 @@ class TrinityCoordinator:
                 frame_start = asyncio.get_event_loop().time()
                 img = await self._snapshot_camera(entity_id)
                 if img is not None:
-                    img = await self.hass.async_add_executor_job(crop_and_resize, img)
+                    img = await self.hass.async_add_executor_job(crop_and_resize, img, 64, crop)
                     await self._publish(to_rgb565(img))
                     frames += 1
                 elapsed = asyncio.get_event_loop().time() - frame_start

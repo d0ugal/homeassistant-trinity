@@ -86,6 +86,19 @@ display_stream:
           min: 1
           mode: box
           unit_of_measurement: seconds
+    crop:
+      name: Crop anchor
+      description: Which part of the camera frame to crop to. Defaults to center.
+      required: false
+      example: top_right
+      selector:
+        select:
+          options:
+            - center
+            - top_left
+            - top_right
+            - bottom_left
+            - bottom_right
 
 display_emoji:
   name: Display emoji

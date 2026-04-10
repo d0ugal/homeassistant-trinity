@@ -37,10 +37,13 @@ _SCHEMA_DISPLAY_IMAGE = vol.Schema(
     }
 )
 
+_CROP_ANCHORS = {"center", "top_left", "top_right", "bottom_left", "bottom_right"}
+
 _SCHEMA_DISPLAY_STREAM = vol.Schema(
     {
         vol.Required("entity_id"): cv.entity_id,
         vol.Required("stream_for"): vol.All(vol.Coerce(float), vol.Range(min=1)),
+        vol.Optional("crop", default="center"): vol.In(_CROP_ANCHORS),
     }
 )
 
@@ -96,6 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await coord.do_display_stream(
                 entity_id=call.data["entity_id"],
                 stream_for=call.data["stream_for"],
+                crop=call.data.get("crop", "center"),
             )
 
     async def _display_emoji(call) -> None:
