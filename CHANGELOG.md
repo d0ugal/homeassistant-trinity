@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.3.0...v1.4.0) (2026-04-10)
+
+
+### Features
+
+* add crop anchor to display_stream service ([f90d3a0](https://github.com/d0ugal/homeassistant-trinity/commit/f90d3a006cd649739973122e6b034d994d5f69e9))
+
 ## [1.3.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.2.0...v1.3.0) (2026-04-08)
 
 
