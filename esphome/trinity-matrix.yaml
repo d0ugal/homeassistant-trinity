@@ -32,6 +32,7 @@ mqtt:
             id(pixel_buf) = x;
             id(pixel_valid) = true;
             id(matrix_display).update();
+            id(frame_counter).publish_state(++id(frame_count));
 
 button:
   - platform: restart
@@ -47,6 +48,19 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: frame_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+sensor:
+  - platform: template
+    name: "${name} frame count"
+    id: frame_counter
+    accuracy_decimals: 0
+    unit_of_measurement: "frames"
+    state_class: total_increasing
+    update_interval: never
 
 display:
   - platform: hub75
@@ -64,9 +78,9 @@ display:
             uint8_t hi = (uint8_t)id(pixel_buf)[idx];
             uint8_t lo = (uint8_t)id(pixel_buf)[idx + 1];
             uint16_t rgb565 = ((uint16_t)hi << 8) | lo;
-            uint8_t r = ((rgb565 >> 11) & 0x1F) << 3;
-            uint8_t g = ((rgb565 >> 5) & 0x3F) << 2;
-            uint8_t b = (rgb565 & 0x1F) << 3;
+            uint8_t r = ((rgb565 >> 11) & 0x1F) << 3; r |= r >> 5;
+            uint8_t g = ((rgb565 >> 5)  & 0x3F) << 2; g |= g >> 6;
+            uint8_t b = (rgb565         & 0x1F) << 3; b |= b >> 5;
             it.draw_pixel_at(px, py, Color(r, g, b));
           }
         }
