@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.4.0...v1.5.0) (2026-04-16)
+
+
+### Features
+
+* display_for, display_emoji, persistent default, and crop anchor ([cabdbce](https://github.com/d0ugal/homeassistant-trinity/commit/cabdbcee8e221209803c91e5b2b53ec4e989511e))
+
+
+### Bug Fixes
+
+* add esphome config with correct RGB565 to RGB888 bit-replication ([b19b32e](https://github.com/d0ugal/homeassistant-trinity/commit/b19b32e45ea06483da71dfaebe0ba93ed74e5f93))
+* revert config_flow method signature to single line (ruff format) ([5a93d57](https://github.com/d0ugal/homeassistant-trinity/commit/5a93d572a94c9bf293840cbd0b88a0b890c10efe))
+
 ## [1.4.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.3.0...v1.4.0) (2026-04-10)
 
 
