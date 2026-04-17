@@ -71,6 +71,7 @@ display:
     update_interval: never
     min_refresh_rate: 200
     bit_depth: 6
+    gamma_correct: CIE1931
     lambda: |-
       if (id(pixel_valid) && id(pixel_buf).size() >= 8192) {
         for (int py = 0; py < 64; py++) {
