@@ -33,6 +33,12 @@ mqtt:
             id(pixel_valid) = true;
             id(matrix_display).update();
             id(frame_counter).publish_state(++id(frame_count));
+    - topic: trinity-matrix/brightness
+      then:
+        - lambda: |-
+            int b = atoi(x.c_str());
+            b = b < 0 ? 0 : (b > 255 ? 255 : b);
+            id(matrix_display).set_brightness((uint8_t)b);
 
 button:
   - platform: restart

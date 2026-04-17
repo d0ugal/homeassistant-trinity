@@ -38,6 +38,8 @@ class TrinityCoordinator:
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self.hass = hass
         self._topic: str = entry.data[CONF_TOPIC]
+        # Brightness topic shares the same base path: "a/b/image" -> "a/b/brightness"
+        self._brightness_topic: str = self._topic.rsplit("/", 1)[0] + "/brightness"
         self._store = Store(hass, STORAGE_VERSION, f"trinity_{entry.entry_id}")
 
         # Persisted default — replayed on startup and after display_for reverts
@@ -342,6 +344,12 @@ class TrinityCoordinator:
             self.cancel_revert()
 
         _LOGGER.info("display_emoji: published %r", char)
+
+    async def do_set_brightness(self, brightness: int) -> None:
+        """Publish brightness (0–255) to the brightness MQTT topic."""
+        b = max(0, min(255, brightness))
+        await mqtt.async_publish(self.hass, self._brightness_topic, str(b), retain=True)
+        _LOGGER.info("set_brightness: %d", b)
 
     async def do_clear(self) -> None:
         """Publish an empty payload, causing the display to fall back to clock."""

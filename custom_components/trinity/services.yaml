@@ -136,6 +136,23 @@ display_emoji:
       selector:
         text:
 
+set_brightness:
+  name: Set brightness
+  description: >
+    Set the display brightness. Publishes to the brightness MQTT topic
+    (same base path as the image topic, with /brightness suffix).
+    The ESPHome firmware applies the change immediately without re-rendering frames.
+  fields:
+    brightness:
+      name: Brightness
+      description: Brightness level from 0 (off) to 255 (full). Default on the display is 200.
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: slider
+
 clear:
   name: Clear
   description: Publish an empty payload, causing the display to fall back to its built-in clock.

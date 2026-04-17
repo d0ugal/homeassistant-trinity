@@ -56,6 +56,12 @@ _SCHEMA_DISPLAY_EMOJI = vol.Schema(
     }
 )
 
+_SCHEMA_SET_BRIGHTNESS = vol.Schema(
+    {
+        vol.Required("brightness"): vol.All(vol.Coerce(int), vol.Range(min=0, max=255)),
+    }
+)
+
 _SCHEMA_CLEAR = vol.Schema({})
 
 
@@ -112,6 +118,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 line2=call.data.get("line2"),
             )
 
+    async def _set_brightness(call) -> None:
+        for coord in _coordinators():
+            await coord.do_set_brightness(call.data["brightness"])
+
     async def _clear(call) -> None:
         for coord in _coordinators():
             await coord.do_clear()
@@ -126,6 +136,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             DOMAIN, "display_stream", _display_stream, _SCHEMA_DISPLAY_STREAM
         )
         hass.services.async_register(DOMAIN, "display_emoji", _display_emoji, _SCHEMA_DISPLAY_EMOJI)
+        hass.services.async_register(
+            DOMAIN, "set_brightness", _set_brightness, _SCHEMA_SET_BRIGHTNESS
+        )
         hass.services.async_register(DOMAIN, "clear", _clear, _SCHEMA_CLEAR)
 
     return True
@@ -148,6 +161,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "display_image",
             "display_stream",
             "display_emoji",
+            "set_brightness",
             "clear",
         ):
             hass.services.async_remove(DOMAIN, svc)
