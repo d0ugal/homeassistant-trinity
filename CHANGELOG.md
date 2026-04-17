@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.5.0...v1.6.0) (2026-04-17)
+
+
+### Features
+
+* brightness control via MQTT and trinity.set_brightness service ([0d454b4](https://github.com/d0ugal/homeassistant-trinity/commit/0d454b45cca2fccad017a8c20b122601fc05dd60))
+
+
+### Bug Fixes
+
+* apply ruff format and fix en-dash in brightness docstring ([f616987](https://github.com/d0ugal/homeassistant-trinity/commit/f6169875e37efc1139cc363fbd0619f51764fbd7))
+* enable CIE1931 gamma correction in ESPHome config ([3cfc3ed](https://github.com/d0ugal/homeassistant-trinity/commit/3cfc3edf6a2286939261d5c2607beec7d21438ec))
+* set explicit bit_depth 6 in ESPHome config ([87f5070](https://github.com/d0ugal/homeassistant-trinity/commit/87f5070eb52a35e9586911e5f59cb25b76a9c3d1))
+
 ## [1.5.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.4.0...v1.5.0) (2026-04-16)
 
 
