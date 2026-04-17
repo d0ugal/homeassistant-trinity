@@ -301,7 +301,9 @@ class TrinityCoordinator:
 
             if not png_data:
                 _LOGGER.error(
-                    "display_emoji: could not fetch Twemoji for %r (%s)", char, codepoints
+                    "display_emoji: could not fetch Twemoji for %r (%s)",
+                    char,
+                    codepoints,
                 )
                 return
 
@@ -346,7 +348,7 @@ class TrinityCoordinator:
         _LOGGER.info("display_emoji: published %r", char)
 
     async def do_set_brightness(self, brightness: int) -> None:
-        """Publish brightness (0–255) to the brightness MQTT topic."""
+        """Publish brightness (0-255) to the brightness MQTT topic."""
         b = max(0, min(255, brightness))
         await mqtt.async_publish(self.hass, self._brightness_topic, str(b), retain=True)
         _LOGGER.info("set_brightness: %d", b)

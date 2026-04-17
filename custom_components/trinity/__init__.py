@@ -129,7 +129,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hass.services.has_service(DOMAIN, "display_moon"):
         hass.services.async_register(DOMAIN, "display_moon", _display_moon, _SCHEMA_DISPLAY_MOON)
         hass.services.async_register(
-            DOMAIN, "display_now_playing", _display_now_playing, _SCHEMA_DISPLAY_NOW_PLAYING
+            DOMAIN,
+            "display_now_playing",
+            _display_now_playing,
+            _SCHEMA_DISPLAY_NOW_PLAYING,
         )
         hass.services.async_register(DOMAIN, "display_image", _display_image, _SCHEMA_DISPLAY_IMAGE)
         hass.services.async_register(
