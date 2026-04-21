@@ -80,11 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     def _coordinators() -> list[TrinityCoordinator]:
-        return [
-            c
-            for c in hass.data.get(DOMAIN, {}).values()
-            if isinstance(c, TrinityCoordinator)
-        ]
+        return [c for c in hass.data.get(DOMAIN, {}).values() if isinstance(c, TrinityCoordinator)]
 
     async def _display_moon(call) -> None:
         display_for = call.data.get("display_for")
@@ -94,9 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def _display_now_playing(call) -> None:
         display_for = call.data.get("display_for")
         for coord in _coordinators():
-            await coord.do_display_now_playing(
-                call.data["entity_id"], display_for=display_for
-            )
+            await coord.do_display_now_playing(call.data["entity_id"], display_for=display_for)
 
     async def _display_image(call) -> None:
         display_for = call.data.get("display_for")
@@ -135,24 +129,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await coord.do_clear()
 
     if not hass.services.has_service(DOMAIN, "display_moon"):
-        hass.services.async_register(
-            DOMAIN, "display_moon", _display_moon, _SCHEMA_DISPLAY_MOON
-        )
+        hass.services.async_register(DOMAIN, "display_moon", _display_moon, _SCHEMA_DISPLAY_MOON)
         hass.services.async_register(
             DOMAIN,
             "display_now_playing",
             _display_now_playing,
             _SCHEMA_DISPLAY_NOW_PLAYING,
         )
-        hass.services.async_register(
-            DOMAIN, "display_image", _display_image, _SCHEMA_DISPLAY_IMAGE
-        )
+        hass.services.async_register(DOMAIN, "display_image", _display_image, _SCHEMA_DISPLAY_IMAGE)
         hass.services.async_register(
             DOMAIN, "display_stream", _display_stream, _SCHEMA_DISPLAY_STREAM
         )
-        hass.services.async_register(
-            DOMAIN, "display_emoji", _display_emoji, _SCHEMA_DISPLAY_EMOJI
-        )
+        hass.services.async_register(DOMAIN, "display_emoji", _display_emoji, _SCHEMA_DISPLAY_EMOJI)
         hass.services.async_register(
             DOMAIN, "set_brightness", _set_brightness, _SCHEMA_SET_BRIGHTNESS
         )
@@ -171,9 +159,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN].pop(entry.entry_id, None)
 
-    if not any(
-        isinstance(c, TrinityCoordinator) for c in hass.data.get(DOMAIN, {}).values()
-    ):
+    if not any(isinstance(c, TrinityCoordinator) for c in hass.data.get(DOMAIN, {}).values()):
         for svc in (
             "display_moon",
             "display_now_playing",
