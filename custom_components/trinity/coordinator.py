@@ -109,7 +109,9 @@ class TrinityCoordinator:
             path = attrs.get("path")
             entity_id = attrs.get("entity_id")
             if path or entity_id:
-                await self.do_display_image(path=path, entity_id=entity_id, set_default=False)
+                await self.do_display_image(
+                    path=path, entity_id=entity_id, set_default=False
+                )
 
     # ------------------------------------------------------------------
     # Stream
@@ -175,7 +177,9 @@ class TrinityCoordinator:
         picture: str = str(state.attributes.get("entity_picture") or "")
 
         if not picture and not title and not artist:
-            _LOGGER.debug("display_now_playing: skipping %s — no art or metadata", entity_id)
+            _LOGGER.debug(
+                "display_now_playing: skipping %s — no art or metadata", entity_id
+            )
             return
 
         img: Image.Image | None = None
@@ -186,7 +190,9 @@ class TrinityCoordinator:
             img = Image.new("RGB", (_SIZE, _SIZE), (0, 0, 0))
 
         img = await self.hass.async_add_executor_job(crop_and_resize, img)
-        await self.hass.async_add_executor_job(apply_now_playing_overlay, img, title, artist)
+        await self.hass.async_add_executor_job(
+            apply_now_playing_overlay, img, title, artist
+        )
         await self._publish(to_rgb565(img))
 
         if set_default and not display_for:
@@ -216,7 +222,9 @@ class TrinityCoordinator:
         img: Image.Image | None = None
 
         if path:
-            img = await self.hass.async_add_executor_job(lambda: Image.open(path).convert("RGB"))
+            img = await self.hass.async_add_executor_job(
+                lambda: Image.open(path).convert("RGB")
+            )
         elif entity_id:
             domain = entity_id.split(".")[0]
             if domain == "image":
@@ -260,6 +268,7 @@ class TrinityCoordinator:
         set_default: bool = True,
         line1: str | None = None,
         line2: str | None = None,
+        corner: str | None = None,
     ) -> None:
         """Fetch a Twemoji PNG, resize to 64x64, and publish."""
         self.cancel_stream()
@@ -325,11 +334,13 @@ class TrinityCoordinator:
         def _to_payload() -> bytes:
             from PIL import Image as PilImage
             from tottie.image import to_rgb565
-            from tottie.overlay import apply_now_playing_overlay
+            from tottie.overlay import apply_corner_char, apply_now_playing_overlay
 
             img = PilImage.open(png_path).convert("RGB")
             if line1 or line2:
                 apply_now_playing_overlay(img, line1 or "", line2 or "")
+            if corner:
+                apply_corner_char(img, corner)
             return to_rgb565(img)
 
         payload = await self.hass.async_add_executor_job(_to_payload)
@@ -408,7 +419,9 @@ class TrinityCoordinator:
             _LOGGER.warning("Failed to snapshot camera %s: %s", entity_id, exc)
             return None
 
-    async def _stream_loop(self, entity_id: str, stream_for: float, crop: str = "center") -> None:
+    async def _stream_loop(
+        self, entity_id: str, stream_for: float, crop: str = "center"
+    ) -> None:
         from tottie.image import crop_and_resize, to_rgb565
 
         deadline = asyncio.get_event_loop().time() + stream_for
@@ -420,7 +433,9 @@ class TrinityCoordinator:
                 frame_start = asyncio.get_event_loop().time()
                 img = await self._snapshot_camera(entity_id)
                 if img is not None:
-                    img = await self.hass.async_add_executor_job(crop_and_resize, img, 64, crop)
+                    img = await self.hass.async_add_executor_job(
+                        crop_and_resize, img, 64, crop
+                    )
                     await self._publish(to_rgb565(img))
                     frames += 1
                 elapsed = asyncio.get_event_loop().time() - frame_start
