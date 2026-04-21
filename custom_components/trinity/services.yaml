@@ -135,6 +135,12 @@ display_emoji:
       required: false
       selector:
         text:
+    corner:
+      name: Corner character
+      description: Optional single character to display at the bottom-left corner (e.g. "+" or "-").
+      required: false
+      selector:
+        text:
 
 set_brightness:
   name: Set brightness
