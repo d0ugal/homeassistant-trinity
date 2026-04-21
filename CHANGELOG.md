@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/d0ugal/homeassistant-trinity/compare/v1.7.0...v1.7.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* update corner description to bottom-right and 2x scale ([9c44883](https://github.com/d0ugal/homeassistant-trinity/commit/9c448837c852138e58dbdb5c18a6b84fa53c2168))
+
 ## [1.7.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.6.0...v1.7.0) (2026-04-21)
 
 
