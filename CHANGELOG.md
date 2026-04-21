@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.6.0...v1.7.0) (2026-04-21)
+
+
+### Features
+
+* add corner parameter to display_emoji for trend indicator ([1334fc6](https://github.com/d0ugal/homeassistant-trinity/commit/1334fc6552288fb290d54ece717b6d1a7076252b))
+
 ## [1.6.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.5.0...v1.6.0) (2026-04-17)
 
 
