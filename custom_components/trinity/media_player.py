@@ -27,9 +27,10 @@ async def async_setup_entry(
 
 
 class TrinityMediaPlayer(MediaPlayerEntity):
-    _attr_has_entity_name = True
-    _attr_name = "Display"
-    _attr_supported_features = MediaPlayerEntityFeature.PLAY_MEDIA | MediaPlayerEntityFeature.STOP
+    _attr_name = "Trinity"
+    _attr_supported_features = (
+        MediaPlayerEntityFeature.PLAY_MEDIA | MediaPlayerEntityFeature.STOP
+    )
     _attr_media_content_type = MediaType.VIDEO
 
     def __init__(self, coordinator, entry: ConfigEntry) -> None:
@@ -42,11 +43,13 @@ class TrinityMediaPlayer(MediaPlayerEntity):
     def state(self) -> MediaPlayerState:
         return self._attr_state  # type: ignore[return-value]
 
-    async def async_play_media(self, media_type: str, media_id: str, **kwargs: object) -> None:
+    async def async_play_media(
+        self, media_type: str, media_id: str, **kwargs: object
+    ) -> None:
         self._attr_state = MediaPlayerState.PLAYING
         self._attr_media_content_id = media_id
-        self._coordinator.set_stream_end_callback(self._on_stream_ended)
         await self._coordinator.do_display_url(media_id)
+        self._coordinator.set_stream_end_callback(self._on_stream_ended)
         self.async_write_ha_state()
 
     async def async_media_stop(self) -> None:
