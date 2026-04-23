@@ -10,9 +10,11 @@ pixel data with no cloud dependencies.
 
 - **Moon phase display** — renders a real-time moon phase image using your HA home location
 - **Now playing** — shows album art with track/artist overlay from any HA media player
-- **Display any image** — send a PNG, JPG, or camera snapshot; automatically centre-cropped and resized to 64×64
+- **Display any image** — send a PNG, JPG, or camera snapshot; automatically cropped and resized to 64×64
 - **Emoji display** — fetch any [Twemoji](https://twemoji.twitter.com/) and show it at 64×64, with optional text overlay; cached on disk
-- **Camera streaming** — stream live camera snapshots at ~6 FPS
+- **Camera streaming** — stream live camera snapshots at ~6 FPS via `trinity.display_stream`, or stream HLS via the media player entity
+- **Media player entity** — exposes `media_player.trinity` so any HA service that targets a media player (e.g. `camera.play_stream`) works out of the box
+- **Crop control** — nine crop anchors (`center`, `top`, `bottom`, `left`, `right`, `top_left`, `top_right`, `bottom_left`, `bottom_right`); works with both stream paths
 - **Automation-friendly** — all display modes are triggered by service calls; schedule and combine them however you like
 - **Temporary displays** — `display_for` reverts back to the previous default after a set number of seconds
 - **Persistent default** — the last permanent display call is saved to disk and replayed on HA restart
@@ -61,6 +63,43 @@ mqtt_broker: "10.10.10.x"
 
 ---
 
+## Media player entity
+
+The integration registers a `media_player.trinity` entity that accepts `play_media` and `stop`
+commands. This lets you use standard HA services that target a media player — most usefully
+`camera.play_stream`:
+
+```yaml
+action: camera.play_stream
+data:
+  entity_id: camera.front_door
+  media_player_entity_id: media_player.trinity
+```
+
+The stream is decoded via [PyAV](https://pyav.org/) and published to the display at up to 10 FPS.
+When the stream ends naturally or `media_player.media_stop` is called, the display reverts to
+its default.
+
+### Crop position
+
+Before calling `camera.play_stream`, set `input_select.trinity_crop` to control which part of
+the frame is cropped to the 64×64 display. The input_select is reset to `center` automatically
+when the stream ends.
+
+```yaml
+- action: input_select.select_option
+  target:
+    entity_id: input_select.trinity_crop
+  data:
+    option: top_right
+- action: camera.play_stream
+  data:
+    entity_id: camera.front_left
+    media_player_entity_id: media_player.trinity
+```
+
+---
+
 ## Services
 
 ### `trinity.display_moon`
@@ -85,8 +124,8 @@ data:
 
 ### `trinity.display_image`
 
-Pushes any image or camera snapshot. Centre-cropped and resized to 64×64. Becomes the
-new default unless `display_for` is set.
+Pushes any image or camera snapshot. Cropped and resized to 64×64. Becomes the new default
+unless `display_for` is set.
 
 ```yaml
 action: trinity.display_image
@@ -116,11 +155,26 @@ data:
 Repeatedly snapshots a camera entity and pushes frames at ~6 FPS. Reverts to the default
 display when the duration elapses or another display action is triggered.
 
+The optional `crop` parameter controls which part of the frame is used. Supported values:
+`center` (default), `top`, `bottom`, `left`, `right`, `top_left`, `top_right`,
+`bottom_left`, `bottom_right`. Calling this service also updates `input_select.trinity_crop`.
+
 ```yaml
 action: trinity.display_stream
 data:
   entity_id: camera.front_door
   stream_for: 30
+  crop: top_right   # optional, default: center
+```
+
+### `trinity.set_brightness`
+
+Sets display brightness (0–255).
+
+```yaml
+action: trinity.set_brightness
+data:
+  brightness: 128
 ```
 
 ### `trinity.clear`
