@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.8.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.7.1...v1.8.0) (2026-04-23)
+
+
+### Features
+
+* add media_player platform for camera.play_stream support ([416225f](https://github.com/d0ugal/homeassistant-trinity/commit/416225fc61674c71e5c086cfcec1b25e8f1c03c5))
+* input_select.trinity_crop controls stream crop position ([21de4d1](https://github.com/d0ugal/homeassistant-trinity/commit/21de4d107e90a2279adc7182a946313778aca2cb))
+
+
+### Bug Fixes
+
+* apply ruff formatting ([ed8a668](https://github.com/d0ugal/homeassistant-trinity/commit/ed8a6683866bc20acb1d47289e4e6ca058a037a2))
+* apply ruff formatting to __init__.py ([cb72629](https://github.com/d0ugal/homeassistant-trinity/commit/cb72629d06c37b44dc26a7d6fecb78801424a9a8))
+* fire stream-end callback when cancel_stream() is called externally ([1aea734](https://github.com/d0ugal/homeassistant-trinity/commit/1aea734a3113fe7a0d941c97e5f3cf5a161d6571))
+* remove unused loop variable flagged by ruff ([c03ea09](https://github.com/d0ugal/homeassistant-trinity/commit/c03ea0913c8ff86c1cd91383bdaf2cc39a6d5c0b))
+* stream cancellation race condition and callback ordering ([5eb27d9](https://github.com/d0ugal/homeassistant-trinity/commit/5eb27d933f93269be655e7bed395736ab79fce9a))
+* write playing state before awaiting stream start ([9673fe9](https://github.com/d0ugal/homeassistant-trinity/commit/9673fe944a236f6c62878a0c9a19321ab78d7994))
+
+
+### Documentation
+
+* update README for media player entity and crop anchors ([d260825](https://github.com/d0ugal/homeassistant-trinity/commit/d2608259cc3b284e48506ee2facaced8c46063d1))
+
 ## [1.7.1](https://github.com/d0ugal/homeassistant-trinity/compare/v1.7.0...v1.7.1) (2026-04-21)
 
 
