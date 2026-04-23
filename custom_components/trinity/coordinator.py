@@ -52,6 +52,9 @@ class TrinityCoordinator:
         # Running stream task (if any)
         self._stream_task: asyncio.Task | None = None  # type: ignore[type-arg]
 
+        # Optional callback fired when a do_display_url stream ends naturally
+        self._stream_end_cb: object = None
+
     # ------------------------------------------------------------------
     # Persistence
 
@@ -119,6 +122,85 @@ class TrinityCoordinator:
         if self._stream_task and not self._stream_task.done():
             self._stream_task.cancel()
         self._stream_task = None
+        self._stream_end_cb = None
+
+    def set_stream_end_callback(self, cb: object) -> None:
+        self._stream_end_cb = cb
+
+    async def do_display_url(self, url: str) -> None:
+        """Stream any URL indefinitely via PyAV (used by the media player)."""
+        self.cancel_stream()
+        self.cancel_revert()
+        self._stream_task = self.hass.async_create_task(
+            self._stream_loop_url(url)
+        )
+
+    async def _stream_loop_url(self, url: str) -> None:
+        import queue as stdlib_queue
+        import threading
+
+        from tottie.image import crop_and_resize, to_rgb565
+
+        frame_q: stdlib_queue.Queue = stdlib_queue.Queue(maxsize=2)
+        stop_event = threading.Event()
+
+        def _reader() -> None:
+            import av
+
+            try:
+                container = av.open(url, options={"stimeout": "5000000"})
+                for frame in container.decode(video=0):
+                    if stop_event.is_set():
+                        break
+                    img = frame.to_image().convert("RGB")
+                    if frame_q.full():
+                        try:
+                            frame_q.get_nowait()
+                        except stdlib_queue.Empty:
+                            pass
+                    frame_q.put_nowait(img)
+            except Exception as exc:
+                _LOGGER.warning("Stream reader error (%s): %s", url, exc)
+            finally:
+                try:
+                    frame_q.put_nowait(None)
+                except stdlib_queue.Full:
+                    pass
+
+        thread = threading.Thread(target=_reader, daemon=True)
+        thread.start()
+
+        loop = asyncio.get_running_loop()
+        frames = 0
+        completed = False
+
+        try:
+            while True:
+                try:
+                    img = frame_q.get_nowait()
+                except stdlib_queue.Empty:
+                    await asyncio.sleep(0.01)
+                    continue
+                if img is None:
+                    completed = True
+                    break
+                img = await self.hass.async_add_executor_job(
+                    crop_and_resize, img, 64, "center"
+                )
+                await self._publish(to_rgb565(img))
+                frames += 1
+        except asyncio.CancelledError:
+            pass
+        finally:
+            stop_event.set()
+            self._stream_task = None
+            _LOGGER.info("display_url: stopped after %d frames (%s)", frames, url)
+
+        if completed:
+            cb = self._stream_end_cb
+            self._stream_end_cb = None
+            if cb:
+                cb()  # type: ignore[operator]
 
     # ------------------------------------------------------------------
     # Display services
