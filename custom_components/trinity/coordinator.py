@@ -131,9 +131,7 @@ class TrinityCoordinator:
         """Stream any URL indefinitely via PyAV (used by the media player)."""
         self.cancel_stream()
         self.cancel_revert()
-        self._stream_task = self.hass.async_create_task(
-            self._stream_loop_url(url)
-        )
+        self._stream_task = self.hass.async_create_task(self._stream_loop_url(url))
 
     async def _stream_loop_url(self, url: str) -> None:
         import queue as stdlib_queue
@@ -183,9 +181,7 @@ class TrinityCoordinator:
                 if img is None:
                     completed = True
                     break
-                img = await self.hass.async_add_executor_job(
-                    crop_and_resize, img, 64, "center"
-                )
+                img = await self.hass.async_add_executor_job(crop_and_resize, img, 64, "center")
                 await self._publish(to_rgb565(img))
                 frames += 1
         except asyncio.CancelledError:
