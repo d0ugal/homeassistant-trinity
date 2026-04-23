@@ -117,6 +117,50 @@ class TrinityCoordinator:
     # ------------------------------------------------------------------
     # Stream
 
+    # ------------------------------------------------------------------
+    # Crop helpers
+
+    _CROP_ENTITY = "input_select.trinity_crop"
+
+    def _get_crop(self) -> str:
+        state = self.hass.states.get(self._CROP_ENTITY)
+        return state.state if state else "center"
+
+    async def _set_crop(self, crop: str) -> None:
+        await self.hass.services.async_call(
+            "input_select",
+            "select_option",
+            {"entity_id": self._CROP_ENTITY, "option": crop},
+        )
+
+    async def _reset_crop(self) -> None:
+        await self._set_crop("center")
+
+    @staticmethod
+    async def _crop_and_resize(hass, img, size: int, crop: str):
+        """crop_and_resize wrapper that handles edge anchors tottie doesn't know."""
+        from tottie.image import crop_and_resize
+
+        if crop in ("top", "bottom", "left", "right"):
+
+            def _edge_crop(img=img, crop=crop):
+                w, h = img.size
+                d = min(w, h)
+                if crop == "top":
+                    box = ((w - d) // 2, 0, (w + d) // 2, d)
+                elif crop == "bottom":
+                    box = ((w - d) // 2, h - d, (w + d) // 2, h)
+                elif crop == "left":
+                    box = (0, (h - d) // 2, d, (h + d) // 2)
+                else:  # right
+                    box = (w - d, (h - d) // 2, w, (h + d) // 2)
+                return img.crop(box)
+
+            img = await hass.async_add_executor_job(_edge_crop)
+            crop = "center"
+
+        return await hass.async_add_executor_job(crop_and_resize, img, size, crop)
+
     def cancel_stream(self, _fire_callback: bool = True) -> None:
         """Cancel any in-progress stream."""
         if self._stream_task and not self._stream_task.done():
@@ -140,7 +184,7 @@ class TrinityCoordinator:
         import queue as stdlib_queue
         import threading
 
-        from tottie.image import crop_and_resize, to_rgb565
+        from tottie.image import to_rgb565
 
         frame_q: stdlib_queue.Queue = stdlib_queue.Queue(maxsize=2)
         stop_event = threading.Event()
@@ -173,6 +217,7 @@ class TrinityCoordinator:
 
         loop = asyncio.get_running_loop()
         this_task = asyncio.current_task()
+        crop = self._get_crop()
         frames = 0
         completed = False
         last_publish = 0.0
@@ -191,7 +236,7 @@ class TrinityCoordinator:
                 now = loop.time()
                 if now - last_publish < min_interval:
                     continue  # drop frame, too soon since last publish
-                img = await self.hass.async_add_executor_job(crop_and_resize, img, 64, "center")
+                img = await self._crop_and_resize(self.hass, img, 64, crop)
                 await self._publish(to_rgb565(img))
                 last_publish = loop.time()
                 frames += 1
@@ -201,6 +246,7 @@ class TrinityCoordinator:
             stop_event.set()
             if self._stream_task is this_task:
                 self._stream_task = None
+                await self._reset_crop()
             _LOGGER.info("display_url: stopped after %d frames (%s)", frames, url)
 
         if completed:
@@ -338,6 +384,7 @@ class TrinityCoordinator:
         """Stream camera snapshots to the display for the given duration."""
         self.cancel_stream()
         self.cancel_revert()
+        await self._set_crop(crop)
         self._stream_task = self.hass.async_create_task(
             self._stream_loop(entity_id, stream_for, crop)
         )
@@ -501,8 +548,9 @@ class TrinityCoordinator:
             return None
 
     async def _stream_loop(self, entity_id: str, stream_for: float, crop: str = "center") -> None:
-        from tottie.image import crop_and_resize, to_rgb565
+        from tottie.image import to_rgb565
 
+        this_task = asyncio.current_task()
         deadline = asyncio.get_event_loop().time() + stream_for
         frames = 0
         completed = False
@@ -512,7 +560,7 @@ class TrinityCoordinator:
                 frame_start = asyncio.get_event_loop().time()
                 img = await self._snapshot_camera(entity_id)
                 if img is not None:
-                    img = await self.hass.async_add_executor_job(crop_and_resize, img, 64, crop)
+                    img = await self._crop_and_resize(self.hass, img, 64, crop)
                     await self._publish(to_rgb565(img))
                     frames += 1
                 elapsed = asyncio.get_event_loop().time() - frame_start
@@ -521,7 +569,9 @@ class TrinityCoordinator:
         except asyncio.CancelledError:
             pass
         finally:
-            self._stream_task = None
+            if self._stream_task is this_task:
+                self._stream_task = None
+                await self._reset_crop()
             _LOGGER.info(
                 "display_stream: %s — %d frames sent",
                 "completed" if completed else "cancelled",
