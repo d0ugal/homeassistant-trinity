@@ -117,19 +117,22 @@ class TrinityCoordinator:
     # ------------------------------------------------------------------
     # Stream
 
-    def cancel_stream(self) -> None:
+    def cancel_stream(self, _fire_callback: bool = True) -> None:
         """Cancel any in-progress stream."""
         if self._stream_task and not self._stream_task.done():
             self._stream_task.cancel()
         self._stream_task = None
+        cb = self._stream_end_cb
         self._stream_end_cb = None
+        if _fire_callback and cb:
+            cb()  # type: ignore[operator]
 
     def set_stream_end_callback(self, cb: object) -> None:
         self._stream_end_cb = cb
 
     async def do_display_url(self, url: str) -> None:
         """Stream any URL indefinitely via PyAV (used by the media player)."""
-        self.cancel_stream()
+        self.cancel_stream(_fire_callback=False)
         self.cancel_revert()
         self._stream_task = self.hass.async_create_task(self._stream_loop_url(url))
 
