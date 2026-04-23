@@ -109,7 +109,9 @@ class TrinityCoordinator:
             path = attrs.get("path")
             entity_id = attrs.get("entity_id")
             if path or entity_id:
-                await self.do_display_image(path=path, entity_id=entity_id, set_default=False)
+                await self.do_display_image(
+                    path=path, entity_id=entity_id, set_default=False
+                )
 
     # ------------------------------------------------------------------
     # Stream
@@ -175,7 +177,9 @@ class TrinityCoordinator:
         picture: str = str(state.attributes.get("entity_picture") or "")
 
         if not picture and not title and not artist:
-            _LOGGER.debug("display_now_playing: skipping %s — no art or metadata", entity_id)
+            _LOGGER.debug(
+                "display_now_playing: skipping %s — no art or metadata", entity_id
+            )
             return
 
         img: Image.Image | None = None
@@ -186,7 +190,9 @@ class TrinityCoordinator:
             img = Image.new("RGB", (_SIZE, _SIZE), (0, 0, 0))
 
         img = await self.hass.async_add_executor_job(crop_and_resize, img)
-        await self.hass.async_add_executor_job(apply_now_playing_overlay, img, title, artist)
+        await self.hass.async_add_executor_job(
+            apply_now_playing_overlay, img, title, artist
+        )
         await self._publish(to_rgb565(img))
 
         if set_default and not display_for:
@@ -216,7 +222,9 @@ class TrinityCoordinator:
         img: Image.Image | None = None
 
         if path:
-            img = await self.hass.async_add_executor_job(lambda: Image.open(path).convert("RGB"))
+            img = await self.hass.async_add_executor_job(
+                lambda: Image.open(path).convert("RGB")
+            )
         elif entity_id:
             domain = entity_id.split(".")[0]
             if domain == "image":
@@ -411,27 +419,76 @@ class TrinityCoordinator:
             _LOGGER.warning("Failed to snapshot camera %s: %s", entity_id, exc)
             return None
 
-    async def _stream_loop(self, entity_id: str, stream_for: float, crop: str = "center") -> None:
+    async def _stream_loop(
+        self, entity_id: str, stream_for: float, crop: str = "center"
+    ) -> None:
+        import queue as stdlib_queue
+        import threading
+
         from tottie.image import crop_and_resize, to_rgb565
 
-        deadline = asyncio.get_event_loop().time() + stream_for
+        camera_name = entity_id.rsplit(".", 1)[-1]
+        rtsp_url = f"rtsp://localhost:8554/{camera_name}_sub"
+
+        frame_q: stdlib_queue.Queue = stdlib_queue.Queue(maxsize=2)
+        stop_event = threading.Event()
+
+        def _reader() -> None:
+            import av
+
+            try:
+                container = av.open(
+                    rtsp_url,
+                    options={"rtsp_transport": "tcp", "stimeout": "5000000"},
+                )
+                for frame in container.decode(video=0):
+                    if stop_event.is_set():
+                        break
+                    img = frame.to_image().convert("RGB")
+                    # Drop the oldest frame if the consumer hasn't caught up
+                    if frame_q.full():
+                        try:
+                            frame_q.get_nowait()
+                        except stdlib_queue.Empty:
+                            pass
+                    frame_q.put_nowait(img)
+            except Exception as exc:
+                _LOGGER.warning("RTSP reader error (%s): %s", rtsp_url, exc)
+            finally:
+                try:
+                    frame_q.put_nowait(None)  # sentinel so consumer can unblock
+                except stdlib_queue.Full:
+                    pass
+
+        thread = threading.Thread(target=_reader, daemon=True)
+        thread.start()
+
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + stream_for
         frames = 0
         completed = False
 
         try:
-            while asyncio.get_event_loop().time() < deadline:
-                frame_start = asyncio.get_event_loop().time()
-                img = await self._snapshot_camera(entity_id)
-                if img is not None:
-                    img = await self.hass.async_add_executor_job(crop_and_resize, img, 64, crop)
-                    await self._publish(to_rgb565(img))
-                    frames += 1
-                elapsed = asyncio.get_event_loop().time() - frame_start
-                await asyncio.sleep(max(0, 0.15 - elapsed))
+            while loop.time() < deadline:
+                try:
+                    img = frame_q.get_nowait()
+                except stdlib_queue.Empty:
+                    await asyncio.sleep(0.01)
+                    continue
+                if img is None:
+                    _LOGGER.warning("RTSP stream ended early for %s", entity_id)
+                    completed = True
+                    break
+                img = await self.hass.async_add_executor_job(
+                    crop_and_resize, img, 64, crop
+                )
+                await self._publish(to_rgb565(img))
+                frames += 1
             completed = True
         except asyncio.CancelledError:
             pass
         finally:
+            stop_event.set()
             self._stream_task = None
             _LOGGER.info(
                 "display_stream: %s — %d frames sent",
