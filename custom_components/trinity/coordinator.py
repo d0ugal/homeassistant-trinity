@@ -170,7 +170,6 @@ class TrinityCoordinator:
         thread = threading.Thread(target=_reader, daemon=True)
         thread.start()
 
-        loop = asyncio.get_running_loop()
         frames = 0
         completed = False
 
