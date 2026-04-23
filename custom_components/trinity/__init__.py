@@ -37,7 +37,17 @@ _SCHEMA_DISPLAY_IMAGE = vol.Schema(
     }
 )
 
-_CROP_ANCHORS = {"center", "top_left", "top_right", "bottom_left", "bottom_right"}
+_CROP_ANCHORS = {
+    "center",
+    "top",
+    "bottom",
+    "left",
+    "right",
+    "top_left",
+    "top_right",
+    "bottom_left",
+    "bottom_right",
+}
 
 _SCHEMA_DISPLAY_STREAM = vol.Schema(
     {
