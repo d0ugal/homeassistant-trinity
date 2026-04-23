@@ -44,9 +44,9 @@ class TrinityMediaPlayer(MediaPlayerEntity):
     async def async_play_media(self, media_type: str, media_id: str, **kwargs: object) -> None:
         self._attr_state = MediaPlayerState.PLAYING
         self._attr_media_content_id = media_id
+        self.async_write_ha_state()
         await self._coordinator.do_display_url(media_id)
         self._coordinator.set_stream_end_callback(self._on_stream_ended)
-        self.async_write_ha_state()
 
     async def async_media_stop(self) -> None:
         self._coordinator.cancel_stream()
