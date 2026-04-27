@@ -198,7 +198,10 @@ class TrinityCoordinator:
             try:
                 _LOGGER.info("display_url: opening stream (t=%.2fs)", time.monotonic() - t0)
                 container = av.open(url, options={"stimeout": "5000000"})
-                _LOGGER.info("display_url: stream opened, decoding first frame (t=%.2fs)", time.monotonic() - t0)
+                _LOGGER.info(
+                    "display_url: stream opened, decoding first frame (t=%.2fs)",
+                    time.monotonic() - t0,
+                )
                 for frame in container.decode(video=0):
                     if stop_event.is_set():
                         break
@@ -239,14 +242,20 @@ class TrinityCoordinator:
                     completed = True
                     break
                 if frames == 0:
-                    _LOGGER.info("display_url: first frame received from queue (t=%.2fs)", time.monotonic() - t0)
+                    _LOGGER.info(
+                        "display_url: first frame received from queue (t=%.2fs)",
+                        time.monotonic() - t0,
+                    )
                 now = loop.time()
                 if now - last_publish < min_interval:
                     continue  # drop frame, too soon since last publish
                 img = await self._crop_and_resize(self.hass, img, 64, crop)
                 await self._publish(to_rgb565(img))
                 if frames == 0:
-                    _LOGGER.info("display_url: first frame published to display (t=%.2fs)", time.monotonic() - t0)
+                    _LOGGER.info(
+                        "display_url: first frame published to display (t=%.2fs)",
+                        time.monotonic() - t0,
+                    )
                 last_publish = loop.time()
                 frames += 1
         except asyncio.CancelledError:
@@ -256,7 +265,9 @@ class TrinityCoordinator:
             if self._stream_task is this_task:
                 self._stream_task = None
                 await self._reset_crop()
-            _LOGGER.info("display_url: stopped after %d frames (t=%.2fs)", frames, time.monotonic() - t0)
+            _LOGGER.info(
+                "display_url: stopped after %d frames (t=%.2fs)", frames, time.monotonic() - t0
+            )
 
         if completed:
             cb = self._stream_end_cb
