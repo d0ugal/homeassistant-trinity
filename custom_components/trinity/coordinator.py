@@ -176,12 +176,15 @@ class TrinityCoordinator:
 
     async def do_display_url(self, url: str) -> None:
         """Stream any URL indefinitely via PyAV (used by the media player)."""
-        self.cancel_stream(_fire_callback=False)
+        # Keep any running stream (e.g. display_stream) alive as a bridge until
+        # the first PyAV frame arrives, so the display isn't blank during startup.
+        bridge = self._stream_task if (self._stream_task and not self._stream_task.done()) else None
+        self._stream_task = None  # detach without cancelling
         self.cancel_revert()
         _LOGGER.info("display_url: received URL, starting stream task")
-        self._stream_task = self.hass.async_create_task(self._stream_loop_url(url))
+        self._stream_task = self.hass.async_create_task(self._stream_loop_url(url, bridge=bridge))
 
-    async def _stream_loop_url(self, url: str) -> None:
+    async def _stream_loop_url(self, url: str, bridge: asyncio.Task | None = None) -> None:
         import queue as stdlib_queue
         import threading
         import time
@@ -246,6 +249,8 @@ class TrinityCoordinator:
                         "display_url: first frame received from queue (t=%.2fs)",
                         time.monotonic() - t0,
                     )
+                    if bridge and not bridge.done():
+                        bridge.cancel()
                 now = loop.time()
                 if now - last_publish < min_interval:
                     continue  # drop frame, too soon since last publish
