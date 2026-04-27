@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.8.0...v1.9.0) (2026-04-27)
+
+
+### Features
+
+* bridge display_stream into do_display_url until first PyAV frame arrives ([16045d1](https://github.com/d0ugal/homeassistant-trinity/commit/16045d12e26975102e13a3686d4a2e37d68cbd31))
+
 ## [1.8.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.7.1...v1.8.0) (2026-04-23)
 
 
