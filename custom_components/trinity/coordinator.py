@@ -178,14 +178,17 @@ class TrinityCoordinator:
         """Stream any URL indefinitely via PyAV (used by the media player)."""
         self.cancel_stream(_fire_callback=False)
         self.cancel_revert()
+        _LOGGER.info("display_url: received URL, starting stream task")
         self._stream_task = self.hass.async_create_task(self._stream_loop_url(url))
 
     async def _stream_loop_url(self, url: str) -> None:
         import queue as stdlib_queue
         import threading
+        import time
 
         from tottie.image import to_rgb565
 
+        t0 = time.monotonic()
         frame_q: stdlib_queue.Queue = stdlib_queue.Queue(maxsize=2)
         stop_event = threading.Event()
 
@@ -193,7 +196,9 @@ class TrinityCoordinator:
             import av
 
             try:
+                _LOGGER.info("display_url: opening stream (t=%.2fs)", time.monotonic() - t0)
                 container = av.open(url, options={"stimeout": "5000000"})
+                _LOGGER.info("display_url: stream opened, decoding first frame (t=%.2fs)", time.monotonic() - t0)
                 for frame in container.decode(video=0):
                     if stop_event.is_set():
                         break
@@ -233,11 +238,15 @@ class TrinityCoordinator:
                 if img is None:
                     completed = True
                     break
+                if frames == 0:
+                    _LOGGER.info("display_url: first frame received from queue (t=%.2fs)", time.monotonic() - t0)
                 now = loop.time()
                 if now - last_publish < min_interval:
                     continue  # drop frame, too soon since last publish
                 img = await self._crop_and_resize(self.hass, img, 64, crop)
                 await self._publish(to_rgb565(img))
+                if frames == 0:
+                    _LOGGER.info("display_url: first frame published to display (t=%.2fs)", time.monotonic() - t0)
                 last_publish = loop.time()
                 frames += 1
         except asyncio.CancelledError:
@@ -247,7 +256,7 @@ class TrinityCoordinator:
             if self._stream_task is this_task:
                 self._stream_task = None
                 await self._reset_crop()
-            _LOGGER.info("display_url: stopped after %d frames (%s)", frames, url)
+            _LOGGER.info("display_url: stopped after %d frames (t=%.2fs)", frames, time.monotonic() - t0)
 
         if completed:
             cb = self._stream_end_cb
