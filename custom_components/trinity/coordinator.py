@@ -255,6 +255,7 @@ class TrinityCoordinator:
                 if now - last_publish < min_interval:
                     continue  # drop frame, too soon since last publish
                 img = await self._crop_and_resize(self.hass, img, 64, crop)
+                img.putpixel((0, 0), (0, 255, 0))  # debug: green = camera.play_stream
                 await self._publish(to_rgb565(img))
                 if frames == 0:
                     _LOGGER.info(
@@ -271,7 +272,9 @@ class TrinityCoordinator:
                 self._stream_task = None
                 await self._reset_crop()
             _LOGGER.info(
-                "display_url: stopped after %d frames (t=%.2fs)", frames, time.monotonic() - t0
+                "display_url: stopped after %d frames (t=%.2fs)",
+                frames,
+                time.monotonic() - t0,
             )
 
         if completed:
@@ -586,6 +589,7 @@ class TrinityCoordinator:
                 img = await self._snapshot_camera(entity_id)
                 if img is not None:
                     img = await self._crop_and_resize(self.hass, img, 64, crop)
+                    img.putpixel((0, 0), (255, 165, 0))  # debug: orange = display_stream
                     await self._publish(to_rgb565(img))
                     frames += 1
                 elapsed = asyncio.get_event_loop().time() - frame_start
