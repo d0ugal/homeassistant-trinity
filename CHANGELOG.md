@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.0...v1.9.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* replace deprecated get_event_loop() with get_running_loop() in _stream_loop ([ffde4e8](https://github.com/d0ugal/homeassistant-trinity/commit/ffde4e8ce2a2d8235c1653357abfce6b22845d96))
+
 ## [1.9.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.8.0...v1.9.0) (2026-04-27)
 
 
