@@ -579,20 +579,21 @@ class TrinityCoordinator:
         from tottie.image import to_rgb565
 
         this_task = asyncio.current_task()
-        deadline = asyncio.get_event_loop().time() + stream_for
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + stream_for
         frames = 0
         completed = False
 
         try:
-            while asyncio.get_event_loop().time() < deadline:
-                frame_start = asyncio.get_event_loop().time()
+            while loop.time() < deadline:
+                frame_start = loop.time()
                 img = await self._snapshot_camera(entity_id)
                 if img is not None:
                     img = await self._crop_and_resize(self.hass, img, 64, crop)
                     img.putpixel((0, 0), (255, 165, 0))  # debug: orange = display_stream
                     await self._publish(to_rgb565(img))
                     frames += 1
-                elapsed = asyncio.get_event_loop().time() - frame_start
+                elapsed = loop.time() - frame_start
                 await asyncio.sleep(max(0, 0.15 - elapsed))
             completed = True
         except asyncio.CancelledError:
