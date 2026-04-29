@@ -107,7 +107,13 @@ class TrinityCoordinator:
         elif mode == DISPLAY_MODE_EMOJI:
             char = attrs.get("char")
             if char:
-                await self.do_display_emoji(char, set_default=False)
+                await self.do_display_emoji(
+                    char,
+                    set_default=False,
+                    line1=attrs.get("line1"),
+                    line2=attrs.get("line2"),
+                    corner=attrs.get("corner"),
+                )
         elif mode == DISPLAY_MODE_IMAGE:
             path = attrs.get("path")
             entity_id = attrs.get("entity_id")
@@ -501,7 +507,12 @@ class TrinityCoordinator:
 
         if set_default and not display_for:
             self._default_mode = DISPLAY_MODE_EMOJI
-            self._default_attrs = {"char": char}
+            self._default_attrs = {
+                "char": char,
+                "line1": line1,
+                "line2": line2,
+                "corner": corner,
+            }
             await self._save()
 
         if display_for:
