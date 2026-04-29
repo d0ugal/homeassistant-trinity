@@ -535,9 +535,11 @@ class TrinityCoordinator:
         if url.startswith("/"):
             url = f"http://localhost:8123{url}"
 
+        import aiohttp
+
         session = async_get_clientsession(self.hass)
         try:
-            async with session.get(url, timeout=10) as resp:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 resp.raise_for_status()
                 data = await resp.read()
             return await self.hass.async_add_executor_job(
