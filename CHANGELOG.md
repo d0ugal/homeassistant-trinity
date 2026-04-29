@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.2](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.1...v1.9.2) (2026-04-29)
+
+
+### Bug Fixes
+
+* persist emoji overlay params (line1, line2, corner) across reverts ([c70151b](https://github.com/d0ugal/homeassistant-trinity/commit/c70151bbe15d9dd229d0096f8395c90a138df19e))
+* use aiohttp.ClientTimeout in _fetch_image_url instead of bare int ([d8faaf5](https://github.com/d0ugal/homeassistant-trinity/commit/d8faaf50a026aa441a67bf5f12e5d5c98c9d2184))
+
 ## [1.9.1](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.0...v1.9.1) (2026-04-28)
 
 
