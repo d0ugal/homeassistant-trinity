@@ -52,6 +52,11 @@ class TrinityCoordinator:
         # Running stream task (if any)
         self._stream_task: asyncio.Task | None = None  # type: ignore[type-arg]
 
+        # Set by cancel_stream(); checked in _stream_loop before each publish so
+        # a frame that was already in-flight (mid-snapshot) is discarded rather
+        # than written to the display after the new stream has started.
+        self._stream_stop: asyncio.Event | None = None
+
         # Optional callback fired when a do_display_url stream ends naturally
         self._stream_end_cb: object = None
 
@@ -118,7 +123,9 @@ class TrinityCoordinator:
             path = attrs.get("path")
             entity_id = attrs.get("entity_id")
             if path or entity_id:
-                await self.do_display_image(path=path, entity_id=entity_id, set_default=False)
+                await self.do_display_image(
+                    path=path, entity_id=entity_id, set_default=False
+                )
 
     # ------------------------------------------------------------------
     # Stream
@@ -169,6 +176,8 @@ class TrinityCoordinator:
 
     def cancel_stream(self, _fire_callback: bool = True) -> None:
         """Cancel any in-progress stream."""
+        if self._stream_stop is not None:
+            self._stream_stop.set()
         if self._stream_task and not self._stream_task.done():
             self._stream_task.cancel()
         self._stream_task = None
@@ -184,13 +193,21 @@ class TrinityCoordinator:
         """Stream any URL indefinitely via PyAV (used by the media player)."""
         # Keep any running stream (e.g. display_stream) alive as a bridge until
         # the first PyAV frame arrives, so the display isn't blank during startup.
-        bridge = self._stream_task if (self._stream_task and not self._stream_task.done()) else None
+        bridge = (
+            self._stream_task
+            if (self._stream_task and not self._stream_task.done())
+            else None
+        )
         self._stream_task = None  # detach without cancelling
         self.cancel_revert()
         _LOGGER.info("display_url: received URL, starting stream task")
-        self._stream_task = self.hass.async_create_task(self._stream_loop_url(url, bridge=bridge))
+        self._stream_task = self.hass.async_create_task(
+            self._stream_loop_url(url, bridge=bridge)
+        )
 
-    async def _stream_loop_url(self, url: str, bridge: asyncio.Task | None = None) -> None:
+    async def _stream_loop_url(
+        self, url: str, bridge: asyncio.Task | None = None
+    ) -> None:
         import queue as stdlib_queue
         import threading
         import time
@@ -205,7 +222,9 @@ class TrinityCoordinator:
             import av
 
             try:
-                _LOGGER.info("display_url: opening stream (t=%.2fs)", time.monotonic() - t0)
+                _LOGGER.info(
+                    "display_url: opening stream (t=%.2fs)", time.monotonic() - t0
+                )
                 container = av.open(url, options={"stimeout": "5000000"})
                 _LOGGER.info(
                     "display_url: stream opened, decoding first frame (t=%.2fs)",
@@ -277,7 +296,9 @@ class TrinityCoordinator:
                 self._stream_task = None
                 await self._reset_crop()
             _LOGGER.info(
-                "display_url: stopped after %d frames (t=%.2fs)", frames, time.monotonic() - t0
+                "display_url: stopped after %d frames (t=%.2fs)",
+                frames,
+                time.monotonic() - t0,
             )
 
         if completed:
@@ -341,7 +362,9 @@ class TrinityCoordinator:
         picture: str = str(state.attributes.get("entity_picture") or "")
 
         if not picture and not title and not artist:
-            _LOGGER.debug("display_now_playing: skipping %s — no art or metadata", entity_id)
+            _LOGGER.debug(
+                "display_now_playing: skipping %s — no art or metadata", entity_id
+            )
             return
 
         img: Image.Image | None = None
@@ -352,7 +375,9 @@ class TrinityCoordinator:
             img = Image.new("RGB", (_SIZE, _SIZE), (0, 0, 0))
 
         img = await self.hass.async_add_executor_job(crop_and_resize, img)
-        await self.hass.async_add_executor_job(apply_now_playing_overlay, img, title, artist)
+        await self.hass.async_add_executor_job(
+            apply_now_playing_overlay, img, title, artist
+        )
         await self._publish(to_rgb565(img))
 
         if set_default and not display_for:
@@ -382,7 +407,9 @@ class TrinityCoordinator:
         img: Image.Image | None = None
 
         if path:
-            img = await self.hass.async_add_executor_job(lambda: Image.open(path).convert("RGB"))
+            img = await self.hass.async_add_executor_job(
+                lambda: Image.open(path).convert("RGB")
+            )
         elif entity_id:
             domain = entity_id.split(".")[0]
             if domain == "image":
@@ -414,6 +441,7 @@ class TrinityCoordinator:
     ) -> None:
         """Stream camera snapshots to the display for the given duration."""
         self.cancel_stream()
+        self._stream_stop = asyncio.Event()
         self.cancel_revert()
         await self._set_crop(crop)
         self._stream_task = self.hass.async_create_task(
@@ -585,26 +613,38 @@ class TrinityCoordinator:
             _LOGGER.warning("Failed to snapshot camera %s: %s", entity_id, exc)
             return None
 
-    async def _stream_loop(self, entity_id: str, stream_for: float, crop: str = "center") -> None:
+    async def _stream_loop(
+        self, entity_id: str, stream_for: float, crop: str = "center"
+    ) -> None:
         from tottie.image import to_rgb565
 
         this_task = asyncio.current_task()
         loop = asyncio.get_running_loop()
         deadline = loop.time() + stream_for
+        stop = self._stream_stop
         frames = 0
         completed = False
 
         try:
             while loop.time() < deadline:
+                if stop is not None and stop.is_set():
+                    break
                 frame_start = loop.time()
                 img = await self._snapshot_camera(entity_id)
+                # Check stop before publishing — a snapshot that completed after
+                # cancel_stream() was called must not overwrite the new display.
+                if stop is not None and stop.is_set():
+                    break
                 if img is not None:
                     img = await self._crop_and_resize(self.hass, img, 64, crop)
+                    if stop is not None and stop.is_set():
+                        break
                     await self._publish(to_rgb565(img))
                     frames += 1
                 elapsed = loop.time() - frame_start
                 await asyncio.sleep(max(0, 0.15 - elapsed))
-            completed = True
+            else:
+                completed = True
         except asyncio.CancelledError:
             pass
         finally:
@@ -618,4 +658,4 @@ class TrinityCoordinator:
             )
 
         if completed:
-            await self._replay_default()
+            self.hass.bus.async_fire("trinity_stream_ended")
