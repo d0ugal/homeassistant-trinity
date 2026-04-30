@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.3](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.2...v1.9.3) (2026-04-30)
+
+
+### Bug Fixes
+
+* discard in-flight snapshots after cancel_stream() is called ([60478ee](https://github.com/d0ugal/homeassistant-trinity/commit/60478eee31bd5d2fc4aba2b1c92d0c419fe18baa))
+
 ## [1.9.2](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.1...v1.9.2) (2026-04-29)
 
 
