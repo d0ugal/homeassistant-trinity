@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.10.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.3...v1.10.0) (2026-05-03)
+
+
+### Features
+
+* add url and line1/line2 support to display_image service ([53b6ef5](https://github.com/d0ugal/homeassistant-trinity/commit/53b6ef5563b130191a70138b68e9e9849e525070))
+
+
+### Bug Fixes
+
+* remove unused alias in _finalize closure ([5b83fe2](https://github.com/d0ugal/homeassistant-trinity/commit/5b83fe242809aceb8b5fde8f4bbcf72479e2567f))
+
 ## [1.9.3](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.2...v1.9.3) (2026-04-30)
 
 
