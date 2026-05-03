@@ -122,8 +122,16 @@ class TrinityCoordinator:
         elif mode == DISPLAY_MODE_IMAGE:
             path = attrs.get("path")
             entity_id = attrs.get("entity_id")
-            if path or entity_id:
-                await self.do_display_image(path=path, entity_id=entity_id, set_default=False)
+            url = attrs.get("url")
+            if path or entity_id or url:
+                await self.do_display_image(
+                    path=path,
+                    entity_id=entity_id,
+                    url=url,
+                    set_default=False,
+                    line1=attrs.get("line1"),
+                    line2=attrs.get("line2"),
+                )
 
     # ------------------------------------------------------------------
     # Stream
@@ -380,10 +388,13 @@ class TrinityCoordinator:
         self,
         path: str | None = None,
         entity_id: str | None = None,
+        url: str | None = None,
         display_for: float | None = None,
         set_default: bool = True,
+        line1: str | None = None,
+        line2: str | None = None,
     ) -> None:
-        """Push an image from a file path, camera entity, or image entity."""
+        """Push an image from a file path, camera/image entity, or remote URL."""
         self.cancel_stream()
         from PIL import Image
         from tottie.image import crop_and_resize, to_rgb565
@@ -398,17 +409,35 @@ class TrinityCoordinator:
                 img = await self._snapshot_image_entity(entity_id)
             else:
                 img = await self._snapshot_camera(entity_id)
+        elif url:
+            img = await self._fetch_image_url(url)
 
         if img is None:
             _LOGGER.warning("display_image: no image source provided or fetch failed")
             return
 
         img = await self.hass.async_add_executor_job(crop_and_resize, img)
-        await self._publish(to_rgb565(img))
+
+        def _finalize(image: Image.Image) -> bytes:
+            from tottie.image import to_rgb565 as _to_rgb565
+
+            if line1 or line2:
+                from tottie.overlay import apply_now_playing_overlay
+
+                apply_now_playing_overlay(image, line1 or "", line2 or "")
+            return _to_rgb565(image)
+
+        payload = await self.hass.async_add_executor_job(_finalize, img)
+        await self._publish(payload)
 
         if set_default and not display_for:
             self._default_mode = DISPLAY_MODE_IMAGE
-            self._default_attrs = {"path": path} if path else {"entity_id": entity_id}
+            if path:
+                self._default_attrs = {"path": path, "line1": line1, "line2": line2}
+            elif url:
+                self._default_attrs = {"url": url, "line1": line1, "line2": line2}
+            else:
+                self._default_attrs = {"entity_id": entity_id, "line1": line1, "line2": line2}
             await self._save()
 
         if display_for:
@@ -416,7 +445,7 @@ class TrinityCoordinator:
         else:
             self.cancel_revert()
 
-        _LOGGER.info("display_image: published %s", entity_id or path)
+        _LOGGER.info("display_image: published %s", entity_id or url or path)
 
     async def do_display_stream(
         self, entity_id: str, stream_for: float, crop: str = "center"
