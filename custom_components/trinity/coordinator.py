@@ -397,7 +397,7 @@ class TrinityCoordinator:
         """Push an image from a file path, camera/image entity, or remote URL."""
         self.cancel_stream()
         from PIL import Image
-        from tottie.image import crop_and_resize, to_rgb565
+        from tottie.image import crop_and_resize
 
         img: Image.Image | None = None
 
@@ -419,13 +419,13 @@ class TrinityCoordinator:
         img = await self.hass.async_add_executor_job(crop_and_resize, img)
 
         def _finalize(image: Image.Image) -> bytes:
-            from tottie.image import to_rgb565 as _to_rgb565
+            from tottie.image import to_rgb565
 
             if line1 or line2:
                 from tottie.overlay import apply_now_playing_overlay
 
                 apply_now_playing_overlay(image, line1 or "", line2 or "")
-            return _to_rgb565(image)
+            return to_rgb565(image)
 
         payload = await self.hass.async_add_executor_job(_finalize, img)
         await self._publish(payload)
