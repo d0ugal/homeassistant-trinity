@@ -39,20 +39,41 @@ display_image:
   fields:
     path:
       name: Path
-      description: Absolute path to a PNG or JPG file. Mutually exclusive with entity_id.
+      description: Absolute path to a PNG or JPG file. Mutually exclusive with entity_id and url.
       required: false
       example: /config/www/image.jpg
       selector:
         text:
     entity_id:
       name: Camera or image entity
-      description: A camera or image entity to snapshot and display. Mutually exclusive with path.
+      description: A camera or image entity to snapshot and display. Mutually exclusive with path and url.
       required: false
       selector:
         entity:
           domain:
             - camera
             - image
+    url:
+      name: URL
+      description: A remote HTTP/HTTPS image URL to fetch and display. Mutually exclusive with path and entity_id. Not cached.
+      required: false
+      example: "https://example.com/bird.jpg"
+      selector:
+        text:
+    line1:
+      name: Line 1
+      description: First line of text to overlay on the image (max 15 characters).
+      required: false
+      example: "Robin"
+      selector:
+        text:
+    line2:
+      name: Line 2
+      description: Second line of text to overlay on the image (max 15 characters).
+      required: false
+      example: "first time!"
+      selector:
+        text:
     display_for:
       name: Display for
       description: Revert to the previous default after this many seconds.
