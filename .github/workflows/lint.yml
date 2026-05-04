@@ -12,9 +12,8 @@ jobs:
       - uses: astral-sh/ruff-action@v4.0.0
         with:
           args: "check"
-      - uses: astral-sh/ruff-action@v4.0.0
-        with:
-          args: "format --check"
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx ruff format --check
 
   pyright:
     runs-on: ubuntu-latest
