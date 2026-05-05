@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/d0ugal/homeassistant-trinity/compare/v1.10.0...v1.10.1) (2026-05-05)
+
+
+### Bug Fixes
+
+* run ruff format check directly to avoid output-format flag issue ([a310a3c](https://github.com/d0ugal/homeassistant-trinity/commit/a310a3cd22b5bfd3fd0bae2249cce6d8ccda1c32))
+
 ## [1.10.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.9.3...v1.10.0) (2026-05-03)
 
 
