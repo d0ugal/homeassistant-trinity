@@ -199,13 +199,21 @@ class TrinityCoordinator:
         """Stream any URL indefinitely via PyAV (used by the media player)."""
         # Keep any running stream (e.g. display_stream) alive as a bridge until
         # the first PyAV frame arrives, so the display isn't blank during startup.
-        bridge = self._stream_task if (self._stream_task and not self._stream_task.done()) else None
+        bridge = (
+            self._stream_task
+            if (self._stream_task and not self._stream_task.done())
+            else None
+        )
         self._stream_task = None  # detach without cancelling
         self.cancel_revert()
         _LOGGER.info("display_url: received URL, starting stream task")
-        self._stream_task = self.hass.async_create_task(self._stream_loop_url(url, bridge=bridge))
+        self._stream_task = self.hass.async_create_task(
+            self._stream_loop_url(url, bridge=bridge)
+        )
 
-    async def _stream_loop_url(self, url: str, bridge: asyncio.Task | None = None) -> None:
+    async def _stream_loop_url(
+        self, url: str, bridge: asyncio.Task | None = None
+    ) -> None:
         import queue as stdlib_queue
         import threading
         import time
@@ -220,7 +228,9 @@ class TrinityCoordinator:
             import av
 
             try:
-                _LOGGER.info("display_url: opening stream (t=%.2fs)", time.monotonic() - t0)
+                _LOGGER.info(
+                    "display_url: opening stream (t=%.2fs)", time.monotonic() - t0
+                )
                 container = av.open(url, options={"stimeout": "5000000"})
                 _LOGGER.info(
                     "display_url: stream opened, decoding first frame (t=%.2fs)",
@@ -358,7 +368,9 @@ class TrinityCoordinator:
         picture: str = str(state.attributes.get("entity_picture") or "")
 
         if not picture and not title and not artist:
-            _LOGGER.debug("display_now_playing: skipping %s — no art or metadata", entity_id)
+            _LOGGER.debug(
+                "display_now_playing: skipping %s — no art or metadata", entity_id
+            )
             return
 
         img: Image.Image | None = None
@@ -369,7 +381,9 @@ class TrinityCoordinator:
             img = Image.new("RGB", (_SIZE, _SIZE), (0, 0, 0))
 
         img = await self.hass.async_add_executor_job(crop_and_resize, img)
-        await self.hass.async_add_executor_job(apply_now_playing_overlay, img, title, artist)
+        await self.hass.async_add_executor_job(
+            apply_now_playing_overlay, img, title, artist
+        )
         await self._publish(to_rgb565(img))
 
         if set_default and not display_for:
@@ -393,6 +407,7 @@ class TrinityCoordinator:
         set_default: bool = True,
         line1: str | None = None,
         line2: str | None = None,
+        position: str = "top",
     ) -> None:
         """Push an image from a file path, camera/image entity, or remote URL."""
         self.cancel_stream()
@@ -402,7 +417,9 @@ class TrinityCoordinator:
         img: Image.Image | None = None
 
         if path:
-            img = await self.hass.async_add_executor_job(lambda: Image.open(path).convert("RGB"))
+            img = await self.hass.async_add_executor_job(
+                lambda: Image.open(path).convert("RGB")
+            )
         elif entity_id:
             domain = entity_id.split(".")[0]
             if domain == "image":
@@ -424,7 +441,7 @@ class TrinityCoordinator:
             if line1 or line2:
                 from tottie.overlay import apply_now_playing_overlay
 
-                apply_now_playing_overlay(image, line1 or "", line2 or "")
+                apply_now_playing_overlay(image, line1 or "", line2 or "", position=position)
             return to_rgb565(image)
 
         payload = await self.hass.async_add_executor_job(_finalize, img)
@@ -593,7 +610,9 @@ class TrinityCoordinator:
 
         session = async_get_clientsession(self.hass)
         try:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            async with session.get(
+                url, timeout=aiohttp.ClientTimeout(total=10)
+            ) as resp:
                 resp.raise_for_status()
                 data = await resp.read()
             return await self.hass.async_add_executor_job(
@@ -628,7 +647,9 @@ class TrinityCoordinator:
             _LOGGER.warning("Failed to snapshot camera %s: %s", entity_id, exc)
             return None
 
-    async def _stream_loop(self, entity_id: str, stream_for: float, crop: str = "center") -> None:
+    async def _stream_loop(
+        self, entity_id: str, stream_for: float, crop: str = "center"
+    ) -> None:
         from tottie.image import to_rgb565
 
         this_task = asyncio.current_task()
