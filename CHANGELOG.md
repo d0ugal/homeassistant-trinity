@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.10.1...v1.11.0) (2026-05-07)
+
+
+### Features
+
+* add position parameter to display_image service ([4faf10f](https://github.com/d0ugal/homeassistant-trinity/commit/4faf10f7a16507ef346613187a665eed460196db))
+
 ## [1.10.1](https://github.com/d0ugal/homeassistant-trinity/compare/v1.10.0...v1.10.1) (2026-05-05)
 
 
