@@ -74,6 +74,16 @@ display_image:
       example: "first time!"
       selector:
         text:
+    position:
+      name: Position
+      description: Where to place the text overlay — top or bottom of the image.
+      required: false
+      default: top
+      selector:
+        select:
+          options:
+            - top
+            - bottom
     display_for:
       name: Display for
       description: Revert to the previous default after this many seconds.
