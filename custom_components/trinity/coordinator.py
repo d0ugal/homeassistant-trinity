@@ -394,9 +394,12 @@ class TrinityCoordinator:
         line1: str | None = None,
         line2: str | None = None,
         position: str = "top",
+        fit: str = "cover",
     ) -> None:
         """Push an image from a file path, camera/image entity, or remote URL."""
         self.cancel_stream()
+        from functools import partial
+
         from PIL import Image
         from tottie.image import crop_and_resize
 
@@ -417,7 +420,7 @@ class TrinityCoordinator:
             _LOGGER.warning("display_image: no image source provided or fetch failed")
             return
 
-        img = await self.hass.async_add_executor_job(crop_and_resize, img)
+        img = await self.hass.async_add_executor_job(partial(crop_and_resize, img, fit=fit))
 
         def _finalize(image: Image.Image) -> bytes:
             from tottie.image import to_rgb565

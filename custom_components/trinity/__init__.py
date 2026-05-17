@@ -38,6 +38,7 @@ _SCHEMA_DISPLAY_IMAGE = vol.Schema(
         vol.Optional("line1"): vol.All(cv.string, vol.Length(max=MAX_CHARS)),
         vol.Optional("line2"): vol.All(cv.string, vol.Length(max=MAX_CHARS)),
         vol.Optional("position", default="top"): vol.In(["top", "bottom"]),
+        vol.Optional("fit", default="cover"): vol.In(["cover", "contain"]),
     }
 )
 
@@ -119,6 +120,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 line1=call.data.get("line1"),
                 line2=call.data.get("line2"),
                 position=call.data.get("position", "top"),
+                fit=call.data.get("fit", "cover"),
             )
 
     async def _display_stream(call) -> None:
