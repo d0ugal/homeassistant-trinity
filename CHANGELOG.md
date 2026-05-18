@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.11.0...v1.12.0) (2026-05-18)
+
+
+### Features
+
+* add fit param to display_image service ([4da41e3](https://github.com/d0ugal/homeassistant-trinity/commit/4da41e39b6ff2cc8b146fe7ab87264edbd0f55df))
+
 ## [1.11.0](https://github.com/d0ugal/homeassistant-trinity/compare/v1.10.1...v1.11.0) (2026-05-07)
 
 
