@@ -231,7 +231,7 @@ class TrinityCoordinator:
                         break
                     img = frame.to_image().convert("RGB")
                     if frame_q.full():
-                        try:
+                        try:  # noqa: SIM105 - hot per-frame loop, avoid contextlib overhead
                             frame_q.get_nowait()
                         except stdlib_queue.Empty:
                             pass
@@ -239,7 +239,7 @@ class TrinityCoordinator:
             except Exception as exc:
                 _LOGGER.warning("Stream reader error (%s): %s", url, exc)
             finally:
-                try:
+                try:  # noqa: SIM105 - hot per-frame loop, avoid contextlib overhead
                     frame_q.put_nowait(None)
                 except stdlib_queue.Full:
                     pass
