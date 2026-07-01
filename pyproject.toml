@@ -7,20 +7,17 @@ target-version = "py312"
 line-length = 100
 
 [tool.ruff.lint]
-select = [
-    "E",
-    "F",
-    "I",
-    "UP",
-    "RUF",
-]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 ignore = [
-    "E501",
-    "RUF012",
+    "E501",   # line length is enforced by the formatter
+    "RUF012", # mutable class attributes are idiomatic in HA entities
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["custom_components.trinity"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.pyright]
 pythonVersion = "3.12"
